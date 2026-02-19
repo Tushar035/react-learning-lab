@@ -1,0 +1,222 @@
+6.Concept of state , usestate(), Lazy initial state
+-------------------------------------------
+
+React useState 
+-------------------
+When building UI with React, one thing you’ll do constantly is store and update data that changes over time — button clicks, form inputs, counters, toggles, API results, etc.
+
+That’s where useState comes in.
+
+ What is useState?
+
+useState is a React Hook that lets you add state to functional components.
+
+State = data that can change and causes the UI to re-render when it changes.
+
+Before hooks, state was only possible in class components.
+Now with useState, functional components do everything.
+
+
+Why useState is Important
+
+Without state:
+------------------
+ UI would be static 
+ No interaction 
+ No user-driven updates 
+
+With useState:
+-----------------
+ Dynamic UI 
+ User interaction 
+ Real-time updates 
+
+Examples where useState is used:
+---------------------------------
+ Counter
+ Form inputs
+ Toggle buttons
+ Modals
+ Tabs
+ Theme switch (dark/light)
+ Loading flags
+
+Basic Syntax
+--------------------
+const [state, setState] = useState(initialValue);
+
+Breakdown:
+-------------
+ state → current value
+ setState → function to update value
+ initialValue → starting value
+
+First Example: Counter
+-----------------------------
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <h2>Count: {count}</h2>
+      <button onClick={() => setCount(count + 1)}>
+        Increment
+      </button>
+    </>
+  );
+}
+
+--> console.log renders twice in dev 
+this behaviour is due to strictmode in main.jsx
+
+export default Counter
+-----------------------------
+
+What’s happening?
+
+1. count starts at 0
+2. Button click calls setCount
+3. React updates state
+4. Component re-renders
+5. UI shows new value
+
+
+Flow:
+--------------
+User Action → setState → State Updated → Re-render → UI Updated
+
+
+Important:
+Calling setState does not mutate the value directly.
+React schedules an update and re-renders safely.
+
+
+Using Different Data Types
+------------------------------
+1️.String State (Input Field)
+---------------------------
+
+const [name, setName] = useState("");
+
+<input 
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+/>
+
+2.Boolean State (Toggle)
+--------------------------
+
+const [isDark, setIsDark] = useState(false);
+
+<button onClick={() => setIsDark(!isDark)}>
+  Toggle Theme
+</button>
+
+
+3️.Object State
+-----------------------
+
+const [user, setUser] = useState({
+  name: "",
+  age: 0
+});
+
+setUser({
+  ...user,
+  name: "Tushar"
+});
+
+
+Always spread previous state for objects.
+
+4️.Array State
+-----------------------
+const [items, setItems] = useState([]);
+
+setItems([...items, "New Item"]);
+
+ Never mutate arrays directly (push ).
+
+
+Functional Updates (Very Important)
+---------------------------------------
+When new state depends on previous state, use a function.
+
+setCount(prevCount => prevCount + 1);
+Why?
+----
+ React batches updates -->async
+ Prevents stale values
+ 
+Interview favorite 💡
+----------------------
+Real-World Example: Login Button
+
+jsx
+function LoginButton() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setIsLoggedIn(true)}>
+        Login
+      </button>
+
+      {isLoggedIn && <h3>Welcome Back!</h3>}
+    </>
+  );
+}
+
+
+Common Mistakes 
+-----------------
+Direct State Mutation
+
+count = count + 1; // wrong
+
+Expecting Immediate Update
+
+setCount(1);
+console.log(count); // still old value
+
+
+Using state when variable is enough
+-------------------------
+
+let temp = 0; // no UI update
+
+Interview Trap Questions 
+----------------------
+Q: Does useState update immediately?
+ No, it schedules an update.
+
+Q: Can we use multiple useState hooks?
+ Yes, unlimited.
+
+Q: Why use functional updates?
+ To avoid stale state in async updates.
+
+Q: Does changing state re-render component?
+ Yes (unless value is same).
+
+
+Best Practices 
+----------------
+Keep state minimal
+Split complex state
+Use functional updates
+Avoid unnecessary state
+Prefer derived values instead of extra state
+
+
+ Conclusion
+-----------------------
+useState is the foundation of React interactivity.
+Mastering it makes:
+
+ UI predictable
+ Code clean
+ Interviews easier 
+

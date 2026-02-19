@@ -1,0 +1,264 @@
+React Introduction
+-----------------------
+Flow of Execution in React
+--------------------------
+			Browser Loads Page
+					│
+					▼
+			 public/index.html (Entry Point)
+			 
+							   <div id="root"></div>
+					│
+					▼
+			 src/main.jsx   (jsx --> html on client side -- this is client side rendering)
+							createRoot(document.getElementById('root')).render
+							This line is like telling React where to show the app.
+							The browser already has an empty box:
+							<div id="root"></div>
+							This box lives in public/index.html
+							createRoot().render() tells React:
+							“Put my React app inside this empty box.”
+							So whatever React builds will appear inside that root div.
+							 createRoot(document.getElementById('root')).render(
+							  <StrictMode>
+								<App />
+							  </StrictMode>,
+							 )
+					│
+					▼
+			 <App /> Component  (main or Root component)
+					│
+					▼
+			 Child Components
+					│
+					▼
+			 Virtual DOM Created
+					│
+					▼
+			 State / Props Change?
+					│
+			   ┌────┴────┐
+			   │  YES    │ NO
+			   ▼         ▼
+			 Re-render   No Change
+			   │
+			   ▼
+			 Diffing (Reconciliation)
+			   │
+			   ▼
+			 Update Real DOM (Only Changes)
+			   │
+			   ▼
+			 Browser Paints UI
+
+Vite
+-----
+npm create vite@latest myapp
+
+
+ <> </> - fragment
+ 
+ Component name should start with uppercase
+ 
+ Diffing = finding changes
+ Reconciliation = applying those changes
+ 
+      State Change
+		   │
+		   ▼
+     New Virtual DOM
+		   │
+		   ▼
+    Diffing Algorithm
+		   │
+		   ▼
+     Reconciliation
+		   │
+		   ▼
+     Real DOM Updated
+
+ 
+ UI Components that manage their own state 
+ reusable, self-contained piece of the User Interface(UI)
+ in react context "rendering" refers to the process of converting the react component's JSX code into the actual HTML elements that can be display in the web browser.
+ 
+Initial Rendering :
+------------------------
+ This happens when the React component is first loaded onto the page. React translates the component's JSX into real HTML and inserts it into the Browser's DOM.
+ 
+ JSX (JavaScript XML) is a syntax extension for JavaScript used in React. It allows us to wrtie HTML-like code within Javascript, making it easier to describe the structure and layout of UI components
+
+State 
+-----
+State refers to the data that a component can hold, which can change over time. React components can manage this state internally and update themselves when the state changes.
+
+ const [count, setCount]=useState(0);
+ (destructuring- fetch individual elements from array or objects)
+ 
+ The Component re-renders and updates the displayed count every time the state changes
+ 
+ This is how react allows UI components to manage their own state and update themselves automatically without needing to reload the entire page.
+
+Re-rendering :
+--------------------
+ This occurs when the component's state or props change. React re-calculates what the UI should look like and only update the necessary parts of the DOM (not the entire page).
+ 
+ Lists need key
+ items.map(item => <li key={item.id}>{item.name}</li>)
+
+Identify items uniquely
+Update only changed items
+
+Components Composed into Complex UIs
+composition
+-------------
+In React, composition means building a screen by joining many small parts together.
+Instead of creating one big, confusing component, we split the screen into small, simple, reusable components.
+
+Each small component does one small job.
+Later, we combine these small components to create a complete page or screen.
+
+Example
+------------
+webpage that has:
+A Header
+A Content area
+A Footer
+
+Instead of writing everything in one file, we create small components.
+
+Header Component
+--------------------
+function Header() {
+  return <h1>Welcome to My Website</h1>;
+}
+
+Content Component
+----------------
+function Content() {
+  return <p>This is the main content of the page.</p>;
+}
+
+Footer Component
+--------------
+function Footer() {
+  return <p>© 2026 My Website</p>;
+}
+
+Combining Components (Composition)
+------------------------------
+function App() {
+  return (
+    <div>
+      <Header />
+      <Content />
+      <Footer />
+    </div>
+  );
+}
+
+
+Real DOM (Simple Explanation)
+--------------------------------
+The Real DOM is the actual web page structure that the browser creates using HTML.
+
+ Every button, text, div, image → lives in the Real DOM
+ Any change (even a small one) forces the browser to:
+
+   Recalculate layout
+   Repaint the screen
+ This makes frequent updates slow
+
+Virtual DOM 
+------------------------------------
+The Virtual DOM is a lightweight copy of the Real DOM kept in memory by React.
+
+ React updates the Virtual DOM first
+ It compares the new Virtual DOM with the previous one
+ Finds only what changed
+ Updates only that part in the Real DOM
+
+Faster performance
+
+ Simple Comparison
+
+| Feature     | Real DOM                    | Virtual DOM    |
+| ----------- | --------------------------- | -------------- |
+| What it is  | Actual browser DOM          | In-memory copy |
+| Update cost | Expensive                   | Cheap          |
+| Speed       | Slower for frequent updates | Faster         |
+| Used by     | Plain JS / jQuery           | React          |
+
+ Example Without Virtual DOM (Real DOM)
+
+HTML
+
+<p id="count">0</p>
+<button onclick="increment()">+</button>
+
+
+JavaScript
+
+function increment() {
+  const countEl = document.getElementById("count");
+  countEl.innerHTML = Number(countEl.innerHTML) + 1;
+}
+
+ What Happens?
+ Browser directly updates the Real DOM
+ For bigger apps, many such updates become slow
+
+Same Example With React (Virtual DOM)
+-----------------------------
+React Component
+
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>{count}</p>   --> this will get changed 
+      <button onClick={() => setCount(count + 1)}>+</button> -- this will be untouched while re-render
+    </div>
+  );
+}
+
+
+What Happens Behind the Scenes?
+1. Button clicked
+2. State changes (`count`)
+3. React creates a new Virtual DOM
+4. React compares old vs new Virtual DOM (diffing)
+5. Only `<p>` text is updated in Real DOM
+
+Button stays untouched → faster update
+
+Visual Flow (Text Diagram)
+----------------------------
+User Action
+   ↓
+State Change
+   ↓
+Virtual DOM Updated
+   ↓
+Compare with Old Virtual DOM
+   ↓
+Only Changed Nodes Updated
+   ↓
+Real DOM Updated
+
+Why Virtual DOM Is Important in Real Apps
+---------------------------------------------
+Imagine:
+------------
+ 1000 list items
+ Only 1 item changes
+
+ Real DOM approach → browser re-renders too much
+ Virtual DOM → only that 1 item updates
+
+unidirectional data flow
+----------------------------
+React follows unidirectional data flow, meaning data flows from parent to child, making the application predictable and easier to debug.

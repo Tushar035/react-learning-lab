@@ -1,0 +1,282 @@
+4.Events in React
+-----------------
+What Are Events in React? 
+
+Events are actions triggered by users or the browser, such as:
+
+ Clicking a button
+ Typing in an input
+ Submitting a form
+ Moving the mouse
+ Pressing a key
+
+React handles events using camelCase names and functions.
+
+Important Rules of React Events
+---------------------------------
+ Use camelCase → onClick, onChange
+ Pass function reference, not function call
+ Events use SyntheticEvent
+ Same event system works on all browsers
+
+ 1.Mouse Events
+------------------
+Used when user interacts with the mouse.
+
+onClick
+-----------
+Triggered when an element is clicked.
+
+<button onClick={() => alert("Clicked")}>Click Me</button>
+
+Use case: Buttons, links, toggles
+
+onDoubleClick
+-------------
+Triggered on double click.
+
+<div onDoubleClick={() => alert("Double Clicked")}>
+  Double Click Here
+</div>
+
+onMouseEnter
+--------------
+Triggered when mouse enters an element.
+
+<div onMouseEnter={() => console.log("Mouse Entered")}>
+  Hover Me
+</div>
+
+onMouseLeave
+------------
+Triggered when mouse leaves.
+
+<div onMouseLeave={() => console.log("Mouse Left")}>
+  Hover Area
+</div>
+
+onMouseMove
+-------------
+Triggered when mouse moves over element.
+
+<div onMouseMove={() => console.log("Moving mouse")}>
+  Move Mouse Here
+</div>
+
+onMouseDown / onMouseUp
+-------------------------
+Triggered when mouse button is pressed/released.
+
+<button onMouseDown={() => console.log("Down")}
+        onMouseUp={() => console.log("Up")}>
+  Press
+</button>
+
+2️.Keyboard Events
+----------------------
+Used when user presses keyboard keys.
+
+onKeyDown
+---------
+Triggered when key is pressed.
+
+<input onKeyDown={(e) => console.log(e.key)} />
+
+onKeyUp
+--------
+Triggered when key is released.
+
+<input onKeyUp={(e) => console.log("Released")} />
+
+
+3️.Form Events (VERY IMPORTANT)
+------------------------------
+Used in forms and inputs.
+
+onChange
+----------
+Triggered when input value changes.
+
+<input
+  type="text"
+  onChange={(e) => console.log(e.target.value)}
+/>
+
+Used for controlled components
+
+onSubmit
+----------
+Triggered when form is submitted.
+
+<form onSubmit={(e) => {
+  e.preventDefault();
+  alert("Form Submitted");
+}}>
+  <button type="submit">Submit</button>
+</form>
+
+onFocus
+----------
+Triggered when input gets focus.
+
+<input onFocus={() => console.log("Focused")} />
+
+ onBlur
+-------
+Triggered when input loses focus.
+
+<input onBlur={() => console.log("Blurred")} />
+
+onInput
+-------------
+Triggered immediately on input (less common).
+
+<input onInput={() => console.log("Typing")} />
+
+4️.Clipboard Events
+-----------------------
+Used when user copies or pastes text.
+
+onCopy
+------------
+<p onCopy={() => alert("Copied!")}>Copy this text</p>
+
+onPaste
+------------
+<input onPaste={() => alert("Pasted")} />
+
+onCut
+-------
+<input onCut={() => alert("Cut")} />
+
+5️.Focus Events
+----------------
+Used to track focus behavior.
+
+onFocus
+----------
+Triggered when element gains focus.
+
+onBlur
+------
+Triggered when element loses focus.
+These bubble in React (unlike native DOM)
+
+6️.Touch Events (Mobile Devices)
+-------------------------------
+Used for mobile and tablets.
+
+onTouchStart
+-----------------
+<div onTouchStart={() => console.log("Touch Start")}>
+  Touch Me
+</div>
+
+onTouchMove
+---------------
+<div onTouchMove={() => console.log("Touch Move")} />
+
+onTouchEnd
+-------------
+<div onTouchEnd={() => console.log("Touch End")} />
+
+Use cases
+---------
+ Mobile gestures
+ Swipes
+ Games
+
+7️.Drag & Drop Events
+----------------------
+Used for draganddrop functionality.
+
+onDragStart
+------------
+<div draggable onDragStart={() => console.log("Drag Start")}>
+  Drag Me
+</div>
+
+onDragOver
+-----------
+<div onDragOver={(e) => e.preventDefault()}>
+  Drop Here
+</div>
+
+onDrop
+--------
+<div onDrop={() => console.log("Dropped")}>
+  Drop Area
+</div>
+
+
+8️.Media Events (Audio / Video)
+--------------------------
+onPlay
+------
+<video onPlay={() => console.log("Playing")} />
+
+onPause
+--------
+<video onPause={() => console.log("Paused")} />
+
+onEnded
+--------
+<video onEnded={() => console.log("Ended")} />
+
+9.Image Events
+----------- 
+onLoad
+-------
+<img src="img.png" onLoad={() => console.log("Loaded")} />
+
+onError
+-------
+<img src="wrong.png" onError={() => console.log("Error")} />
+
+10.Animation & Transition Events
+------------------------------
+onAnimationEnd
+--------------
+<div onAnimationEnd={() => console.log("Animation Ended")} />
+
+onTransitionEnd
+---------------
+<div onTransitionEnd={() => console.log("Transition Ended")} />
+
+ 🧪 Synthetic Event Object
+----------------------------
+React passes an event object automatically.
+e is called as synthetic event over here
+function handleClick(e) {
+  console.log(e.type);
+  console.log(e.target);
+}
+
+<button onClick={handleClick}>Click</button>
+
+ Normalized across browsers
+ Pooled for performance
+
+Common Mistakes
+
+Calling function directly  -- loads function on each render
+------------------------
+jsx
+onClick={handleClick()}
+
+Correct
+------------
+jsx
+onClick={handleClick}
+
+ Performance Tips
+------------------------
+ Avoid inline arrow functions in large lists
+ Use useCallback for handlers
+ Don’t overuse event listeners
+
+InterviewReady Summary
+------------------------------
+ React events are handled using Synthetic Events with camelCase naming, allowing consistent and efficient handling of user interactions across browsers.
+
+

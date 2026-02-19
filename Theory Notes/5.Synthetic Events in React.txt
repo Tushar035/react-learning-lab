@@ -1,0 +1,541 @@
+5.Synthetic Events in React 
+---------------------------
+What Is a Synthetic Event?
+
+A Synthetic Event is React’s wrapper around native browser events.
+
+ Instead of using browser events directly, React creates its own event object
+ This object behaves the same across all browsers
+
+In simple words:
+ React sits between the browser and your code and standardizes events.
+
+Why Did React Create Synthetic Events?
+
+Different browsers behave slightly different for the same event.
+
+Example:
+
+ event.target
+ event.key
+ event.preventDefault()
+
+React wanted:
+
+ Consistent behavior
+ Better performance
+ Cleaner event system
+
+So it introduced SyntheticEvent.
+
+Real Comparison
+--------------------
+ Native Browser Event
+------------------------
+js
+element.addEventListener("click", function (event) {
+  console.log(event);
+});
+
+React Synthetic Event
+---------------------
+jsx
+<button onClick={(event) => console.log(event)}>
+  Click
+</button>
+
+ That event is not the real DOM event
+ It’s a SyntheticEvent
+
+What Does a Synthetic Event Contain?
+------------------------------
+A Synthetic Event:
+
+ Wraps the native event
+ Copies important properties
+ Normalizes behavior
+
+Common Properties
+--------------------
+js
+event.type
+event.target
+event.currentTarget
+event.preventDefault()
+event.stopPropagation()
+
+These work exactly the same in all browsers.
+
+synthetic Event Example
+
+function App() {
+  function handleClick(e) {
+    console.log(e.type);        // click
+    console.log(e.target);      // button element
+    e.preventDefault();
+  }
+
+  return <button onClick={handleClick}>Click Me</button>;
+}
+
+Event Delegation (Very Important )
+--------------------------------------
+How Native Events Work
+Normally, you add listeners to each element. -- addEventListener
+Bad for performance in large apps.
+
+How React Does It
+--------------------
+React uses event delegation.
+Instead of attaching events to every element
+React attaches one listener at the root
+
+		Browser Event
+			 ↓
+		Root Listener
+			 ↓
+		Synthetic Event
+			 ↓
+		Your Component Handler
+
+Why This Matters
+
+ Fewer event listeners
+ Better memory usage
+ Faster performance
+
+Synthetic Event Lifecycle (Internal Flow)
+------------------------------------------
+
+		User clicks button
+				↓
+		Browser fires native event
+				↓
+		React root listener catches it
+				↓
+		React creates SyntheticEvent (object)
+				↓
+		Your onClick handler runs
+
+
+Event Pooling (Very Important Concept)
+--------------------
+What Is Event Pooling?
+
+To improve performance, React reused event objects instead of creating new ones every time.
+After the handler finished:
+ React cleared event properties
+ Reused the object for the next event
+
+Old Problem (Before React 17)
+
+jsx
+function handleClick(e) {
+  setTimeout(() => {
+    console.log(e.target); //  null (old React)
+  }, 1000);
+}
+Because:
+
+ Event was returned to pool
+ Properties were wiped
+
+Solution (Old React)
+
+jsx
+function handleClick(e) {
+  e.persist(); // stops pooling
+}
+
+
+Important Update ⚠️ (React 17+)
+
+Event pooling was removed
+So now this works safely:
+
+function handleClick(e) {
+  setTimeout(() => {
+    console.log(e.target); //  works
+  }, 1000);
+}
+
+ Synthetic vs Native Event (Comparison)
+
+| Feature               | Synthetic Event| Native Event|
+||||
+| Browser consistency   |  Yes           |  No         |
+| Event delegation      |  Yes           |  No         |
+| Performance optimized |  Yes           |  Depends    |
+| Direct DOM access     |  No            |  Yes        |
+
+Stopping Event Propagation
+------------------------------
+function handleClick(e) {
+  e.stopPropagation();
+}
+
+Works the same as native events.
+
+Prevent Default Behavior
+
+
+function handleSubmit(e) {
+  e.preventDefault();
+}
+
+Used in:
+
+ Forms
+ Links
+ Custom controls
+
+Event Bubbling & Capturing in Synthetic Events
+
+React supports both.
+Bubbling (Default)
+
+
+<div onClick={() => console.log("Parent")}>
+  <button onClick={() => console.log("Child")}>
+    Click
+  </button>
+</div>
+
+
+Output:
+
+Child
+Parent
+
+Capturing Phase
+
+
+<div onClickCapture={() => console.log("Parent Capture")}>
+  <button onClickCapture={() => console.log("Child Capture")}>
+    Click
+  </button>
+</div>
+
+Runs top → down
+
+When Should You Use Native Events?
+
+Sometimes you must use native events:
+
+ window.resize
+ scroll
+ keydown outside React tree
+
+useEffect(() => {
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+
+Common Misunderstandings 
+
+ Synthetic events are slower
+→ No, they are optimized
+
+ You cannot access native event
+→ You can:
+
+js
+event.nativeEvent
+
+RealWorld Benefits Summary
+
+ Crossbrowser consistency
+ Better performance via delegation
+ Cleaner code
+ Predictable behavior
+
+InterviewReady Answer
+
+Synthetic Events are React’s crossbrowser wrapper around native DOM events that provide consistent behavior and performance optimizations using event delegation.
+
+
+1️.Prevent Default Behavior
+---------------------------
+What Does preventDefault() Mean? (Layman Words)
+
+Every HTML element has builtin behavior decided by the browser.
+
+preventDefault() tells the browser:
+“Don’t do what you normally do.”
+
+React (or JavaScript) then takes full control.
+
+ Common Default Browser Behaviors
+---------------------------------
+| Element                  | Default Behavior          |
+|--------------------------|---------------------------|
+| <form>                   | Reloads page on submit    |
+| <a>                      | Navigates to another page |
+| <button type="submit">   | Submits form              |
+| Right click              | Opens context menu        |
+| Drag                     | Opens dragged item        |
+| Input Enter              | Submits form              |
+
+
+
+ Scenario 1: Prevent Page Reload on Form Submit (MOST COMMON)
+-----------------------------------------------------------
+Without preventDefault
+-----------------------
+function App() {
+  function handleSubmit(e) {
+    alert("Form submitted");
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+ Page reloads
+ State is lost
+ Bad UX
+
+With preventDefault
+
+function handleSubmit(e) {
+  e.preventDefault();
+  alert("Form submitted without reload");
+}
+
+ React handles submission
+ No page refresh
+-
+ Scenario 2: Stop Link Navigation
+------------------------------
+ Example: SPA Navigation
+-------------------------
+<a href="/dashboard" onClick={(e) => {
+  e.preventDefault();
+  navigate("/dashboard");
+}}>
+  Go to Dashboard
+</a>
+
+ Prevents full page reload
+ Uses React Router instead
+
+ Scenario 3: Custom RightClick Menu
+-------------------------------------
+<div onContextMenu={(e) => {
+  e.preventDefault();
+  console.log("Show custom menu");
+}}>
+  Right Click Me
+</div>
+
+ Browser menu disabled
+ Custom menu enabled
+
+Scenario 4: Prevent Dragging
+--------------------------------
+<img
+  src="image.png"
+  onDragStart={(e) => e.preventDefault()}
+/>
+
+ Image cannot be dragged
+
+Scenario 5: Disable Enter Key Submit
+-------------------------------------
+<input
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+    }
+  }}
+/>
+
+ Useful in search or chat inputs
+
+Summary: When to Use preventDefault()
+---------------------------
+Use it when you want to:
+ Stop page reload
+ Control navigation
+ Override browser behavior
+ Build SPAstyle apps
+
+2.Stopping Event Propagation
+--------------------------------
+What Is Event Propagation? (Layman Words)
+
+When you click an element:
+ The event travels upward through parent elements
+
+This is called event bubbling.
+Normal Bubbling Behavior
+
+jsx
+<div onClick={() => console.log("Parent")}>
+  <button onClick={() => console.log("Child")}>
+    Click
+  </button>
+</div>
+
+
+Output
+----------
+Child
+Parent
+
+
+Event bubbles from child → parent
+
+What Does stopPropagation() Do?
+-----------------------------------
+It tells React:
+“Stop the event right here. Don’t send it to parents.”
+
+
+
+Scenario 1: Button Inside a Card (VERY COMMON)
+-----------------------------------------
+Problem
+
+Clicking button also triggers card click.
+
+<div onClick={() => console.log("Open Card")}>
+  <button onClick={() => console.log("Delete Item")}>
+    Delete
+  </button>
+</div>
+
+
+Output
+----------
+Delete Item
+Open Card  (not wanted)
+
+Solution
+------------
+<button onClick={(e) => {
+  e.stopPropagation();
+  console.log("Delete Item");
+}}>
+  Delete
+</button>
+
+
+Only button action runs
+
+ Scenario 2: Modal Inside Page
+------------------------------------
+<div onClick={() => closeModal()}>
+  <div onClick={(e) => e.stopPropagation()}>
+    Modal Content
+  </div>
+</div>
+
+ Clicking outside closes modal
+ Clicking inside does NOT
+
+Scenario 3: Dropdown Menu
+-----------------------------
+<div onClick={() => setOpen(false)}>
+  <div onClick={(e) => e.stopPropagation()}>
+    Dropdown Content
+  </div>
+</div>
+
+ Click outside → close
+ Click inside → stay open
+
+Scenario 4: Nested Buttons or Icons
+-----------------------------------
+jsx
+<div onClick={() => openDetails()}>
+  <span onClick={(e) => {
+    e.stopPropagation();
+    editItem();
+  }}>
+    ✏️
+  </span>
+</div>
+
+Edit icon doesn’t trigger open
+
+Bubbling vs Capturing
+--------------------------
+Bubbling (Default)
+-----------------
+Child → Parent
+
+Capturing
+----------
+Parent → Child
+
+jsx
+<div onClickCapture={() => console.log("Parent Capture")}>
+  <button onClick={() => console.log("Child")}>
+    Click
+  </button>
+</div>
+
+
+Order:
+-------
+Parent Capture
+Child
+
+Can You Stop Capturing?
+-------------------------
+jsx
+e.stopPropagation();
+
+Stops both bubbling & capturing from that point
+
+Prevent Default vs Stop Propagation
+--------------------------------------
+| Feature                | preventDefault | stopPropagation |
+|------------------------|----------------|-----------------|
+| Stops browser behavior |  Yes           |  No             |
+| Stops parent handlers  |  No            |  Yes            |
+| Used for               | Forms, links   | Nested UI       |
+| Affects event flow     |  No            | Yes             |
+
+Using Both Together (REALWORLD)
+
+jsx
+<button onClick={(e) => {
+  e.preventDefault();
+  e.stopPropagation();
+}}>
+  Custom Action
+</button>
+
+ No default behavior
+ No parent click
+
+Used in:
+--------
+ Forms inside modals
+ Buttons inside links
+ Complex UI interactions
+
+Common Mistakes
+---------------
+ Using stopPropagation instead of preventDefault
+ Blocking propagation unnecessarily
+ Forgetting bubbling exists
+
+
+InterviewReady Answers
+
+Prevent Default
+-----------------
+preventDefault() stops the browser’s default behavior like page reload or navigation.
+
+Stop Propagation
+------------------
+stopPropagation() prevents the event from bubbling to parent elements.
+
+
+
