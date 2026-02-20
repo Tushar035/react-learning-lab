@@ -1,0 +1,677 @@
+7.useEffect
+-----------
+What is useEffect?
+----------------------
+In React, useEffect lets you perform side effects in functional components.
+Side effects = things that happen outside rendering
+
+A side effect is anything that:
+ Fetching data from an API
+ Subscribing to events (window, WebSocket, etc.)
+ Updating the DOM manually
+ Timers (setInterval, setTimeout)
+ Logging or analytics
+ Interacts with localStorage
+ 
+Simple Rule
+----------------
+Render -> describes UI
+useEffect -> synchronizes with the outside world
+
+Syntax
+-----------
+useEffect(() => {
+   // side effect logic
+
+   return () => {
+      // cleanup logic (optional)
+   };
+}, [dependencies]);
+
+ *Effect function → runs your side effect
+ *Cleanup function → runs:
+					   Before effect re-runs
+					   When component unmounts
+ *Dependency array → controls when effect runs
+ 
+2️.Why useEffect Exists
+-----------------
+Before hooks, class components used:
+
+componentDidMount() -> initial render
+componentDidUpdate() -> re-renders
+componentWillUnmount() 
+
+useEffect combines all three into one powerful hook.
+
+3️.When Does useEffect Run?
+-------------------------
+There are 3 main patterns:
+
+ I. Run Once (ComponentDidMount Equivalent)
+ ----------------------
+	useEffect(() => {
+	   console.log("Component Mounted");
+	}, []);  -> empty array
+	
+Runs only once after first render.
+ Used for:
+ API calls
+ Initial setup
+ Authentication check
+
+ II. Run on Dependency Change (ComponentDidUpdate)
+ ---------------------------------------------
+	useEffect(() => {
+	   console.log("Count changed:", count);
+	}, [count]); 
+
+Runs whenever count changes.
+
+ III. Run on Every Render
+ -----------------------
+
+	useEffect(() => {
+	   console.log("Runs on every render");
+	});
+
+No dependency array = runs after every render.
+
+4️.Real Execution Flow
+--------------------
+	When React renders:
+
+	1. Component renders
+	2. UI updates
+	3. useEffect runs AFTER paint
+
+Important:
+useEffect does NOT block rendering.
+
+5️.Real-World Example – API Fetching
+--------------------------------------
+import React, { useState, useEffect } from "react";
+
+function Users() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then(res => res.json())
+      .then(data => setUsers(data));
+  }, []);
+
+  return (
+    <div>
+      {users.map(user => (
+        <p key={user.id}>{user.name}</p>
+      ))}
+    </div>
+  );
+}
+
+ What happens?
+ Component renders
+ useEffect runs
+ API call happens
+ State updates
+ Re-render occurs
+
+6️.Cleanup Function (Very Important)
+----------------------------------
+Used for:
+ Removing event listeners
+ Clearing intervals
+ Cancelling subscriptions
+
+Example: Timer Cleanup
+-------------------------
+useEffect(() => {
+  const interval = setInterval(() => {
+    console.log("Running...");
+  }, 1000);
+
+  return () => {
+    clearInterval(interval);
+  };
+}, []);
+
+Without cleanup → memory leak.
+
+7️.Event Listener Example
+-------------------------
+
+useEffect(() => {
+  const handleResize = () => {
+    console.log(window.innerWidth);
+  };
+
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+}, []);
+
+8️.Common Mistakes (Interview Traps)
+------------------------------------
+	I. Missing Dependency
+	-----------------------
+
+	useEffect(() => {
+	   console.log(count);
+	}, []); // Wrong
+
+	This creates stale values.
+
+	II. Infinite Loop
+	--------------------
+
+	useEffect(() => {
+	   setCount(count + 1);
+	}, [count]);
+
+	Why?
+	 count changes
+	 effect runs
+	 count changes again
+	 infinite loop
+
+	III. Updating State Incorrectly
+	--------------------------------
+	When state depends on previous state:
+
+	setCount(prev => prev + 1);
+
+9️.How Dependency Array Works
+----------------------------
+React compares dependency values using:
+
+ Shallow comparison
+
+For objects & arrays:
+
+useEffect(() => {
+   console.log("Runs every time");
+}, [{ name: "Tushar" }]); // New object every render
+
+This causes unnecessary re-renders.
+
+10.useEffect vs useLayoutEffect
+--------------------------------
+| useEffect        | useLayoutEffect   |
+| ---------------- | ----------------- |
+| Runs after paint | Runs before paint |
+| Non-blocking     | Blocking          |
+| Most common      | Rare use cases    |
+
+Use useLayoutEffect when:
+
+ You need to measure DOM before paint
+ Prevent flickering
+
+1️1.Real Life Analogy
+-------------------------
+Think of useEffect like:
+
+ "After the house is built (rendered), do additional work."
+
+Render = Build house
+useEffect = Install electricity, water, internet
+
+1️2.Advanced Example – Dependent API Calls
+-------------------------------------------
+useEffect(() => {
+  if (userId) {
+    fetch(/api/orders/${userId})
+      .then(res => res.json())
+      .then(data => setOrders(data));
+  }
+}, [userId]);
+
+
+1️3.Performance Best Practices
+------------------------------
+Always specify dependencies
+Avoid unnecessary object/array dependencies
+Use useCallback when passing functions
+Keep effects small and focused
+Split multiple concerns into multiple effects
+
+1️4.When NOT to Use useEffect
+---------------------------------
+ For pure calculations
+ For deriving state
+ For event handlers
+
+Bad:
+useEffect(() => {
+  setFullName(first + last);
+}, [first, last]);
+
+Better:
+const fullName = first + last;
+
+15.Common Real-World Use Cases
+--------------------------------
+ Authentication check
+ API fetching
+ WebSocket connections
+ Form validation
+ LocalStorage sync
+ Analytics tracking
+ Scroll listeners
+ Theme detection
+
+16. Use useEffect WHENEVER ALL OF THESE ARE TRUE
+-------------------------------------------------
+1. Logic must run after render
+2. It interacts with something outside React
+3. It may need cleanup
+4. It depends on changing values
+
+If any of these are false → you probably don’t need useEffect.
+
+17. Data Fetching & Network Calls
+-------------------------------
+Use useEffect when:
+ Fetching data from APIs
+ Fetch depends on props or state
+ You need to cancel / ignore stale requests
+
+Examples
+ Initial page load API call
+ Fetching data when id changes
+ Polling APIs
+
+Example (From Screenshot)
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch(/api/users/${userId})
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) setUser(data);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+}
+
+ Prevents setting state after unmount
+ Re-runs when userId changes
+ Has cleanup logic
+
+18. Subscriptions to External Systems
+-------------------------------------
+Use useEffect for:
+ WebSockets
+ Server-Sent Events
+ Event buses
+ Pub/Sub systems
+ Real-time updates
+
+Why?
+Subscriptions must be:
+ Set up
+ Torn down
+
+That is exactly what useEffect is designed for.
+
+19. Browser APIs & Global Events
+--------------------------------
+Use useEffect for:
+ window / document event listeners
+ resize
+ scroll
+ keydown
+ visibilitychange
+ online / offline
+
+These are outside React’s control → React must synchronize with them using effects.
+
+20. Timers & Intervals
+------------------------
+Use useEffect for:
+ setTimeout
+ setInterval
+ Debounce / throttle logic
+
+Why?
+ Timers must start after render
+ Timers must be cleaned up on unmount
+
+Example
+
+useEffect(() => {
+  const id = setInterval(() => console.log("tick"), 1000);
+
+  return () => clearInterval(id);
+}, []);
+
+
+21. Direct DOM Interactions (Escape Hatch)
+--------------------------------------
+Use useEffect when:
+ Focusing an input
+ Measuring DOM nodes
+ Scrolling programmatically
+ Integrating non-React UI libraries
+
+Especially important when using:
+ Charting libraries
+ Animation engines
+ Legacy JS widgets
+
+22. Syncing with Browser Storage
+--------------------------------
+Use useEffect for:
+ localStorage
+ sessionStorage
+ IndexedDB
+
+Examples
+ Persisting theme, language, auth tokens
+ Restoring saved preferences on mount
+
+23. Analytics, Logging & Monitoring
+-------------------------------------
+Use useEffect for:
+
+ Page-view tracking
+ Event tracking
+ Error reporting
+ Performance monitoring
+
+ Why?
+ Analytics is a side effect
+ Should not block rendering
+
+24. Conditional Side Effects
+-------------------------------
+Use useEffect when:
+ Something should happen only if a condition becomes true
+ But NOT during render
+
+Examples
+ Redirect after login
+ Show toast after success
+ Trigger animation when value crosses threshold
+
+25. Synchronizing With Non-React State
+------------------------------------------
+Use useEffect when React must mirror state from:
+ Redux store (manual sync)
+ Custom global store
+ Feature flags
+ External config systems
+
+26. Cleanup Function (Very Important)
+-------------------------------------------
+Cleanup runs when:
+ Component unmounts
+ Before effect re-runs
+
+useEffect(() => {
+  const id = setInterval(() => console.log("tick"), 1000);
+
+  return () => clearInterval(id);
+}, []);
+
+27. Cleanup-Required Logic
+-------------------------------
+If your code needs to:
+ Unsubscribe
+ Disconnect
+ Stop
+ Clear
+ Cancel
+
+You must use useEffect
+Includes:
+ WebSockets
+ Observers
+
+28.Mental Model (Very Important for Interviews)
+------------------
+If interviewer asks:
+
+ "When should we use useEffect?"
+
+Answer:
+"Whenever we need to synchronize our component with something outside React."
+
+29.Summary
+------------
+useEffect is used to:
+ Handle side effects
+ Fetch data
+ Listen to events
+ Manage timers
+ Clean up resources
+ Sync with external systems
+
+30.Golden Rule
+---------------
+If it touches something outside React → useEffect.
+If it needs cleanup → useEffect.
+If it runs after render → useEffect.
+
+31.Final Interview Tip
+-------------------------
+If you understand:
+
+ Render → Commit → Effect
+ Dependency array behavior
+ Cleanup mechanism
+ Infinite loop causes
+ Stale closure problem
+
+HOC (Higher Order Component)
+--------------------------------
+What is HOC?
+A Higher Order Component (HOC) is:
+A function that takes a component and returns a new enhanced component.
+It is a pattern, not a React API.
+Simple Definition
+-------------------
+const EnhancedComponent = higherOrderComponent(WrappedComponent);
+
+Why Use HOC?
+To reuse component logic without duplicating code.
+
+Common use cases:
+ Authentication check
+ Logging
+ Permissions
+ Data fetching
+ Theming
+ Analytics tracking
+
+Basic Example
+-----------------
+ Step 1: Create HOC
+--------------------------
+
+function withLogger(WrappedComponent) {
+  return function EnhancedComponent(props) {
+    console.log("Component rendered:", WrappedComponent.name);
+    return <WrappedComponent {...props} />;
+  };
+}
+
+ Step 2: Use HOC
+--------------------
+
+function Dashboard() {
+  return <h1>Dashboard</h1>;
+}
+
+const DashboardWithLogger = withLogger(Dashboard);
+
+Now every time DashboardWithLogger renders → it logs.
+
+Real World Example – Authentication
+---------------------------------------
+
+function withAuth(Component) {
+  return function AuthComponent(props) {
+    const isAuthenticated = true;
+
+    if (!isAuthenticated) {
+      return <h2>Please Login</h2>;
+    }
+
+    return <Component {...props} />;
+  };
+}
+
+HOC vs Custom Hook
+---------------------
+| HOC                      | Custom Hook                        |
+| ------------------------ | ---------------------------------- |
+| Wraps component          | Used inside component              |
+| Returns new component    | Returns logic/state                |
+| Used in class components | Hooks only for function components |
+
+In modern React, Custom Hooks are preferred.
+
+Important Characteristics
+
+ Does NOT modify original component
+ Returns new component
+ Passes props using {...props}
+ Can wrap multiple components
+
+ Example: Multiple HOCs
+
+export default withAuth(withLogger(Dashboard));
+
+
+Interview Points
+-----------------
+ HOC is a pure function.
+ Used heavily before hooks.
+ React-Redux connect() is an example of HOC.
+ Avoid prop collisions.
+
+Mounting / Unmounting in React
+----------------------------------
+These are part of the Component Lifecycle.
+
+What is Mounting?
+---------------
+Mounting =
+ When a component is created and inserted into the DOM.
+
+ Happens When:
+
+ Component appears on screen for the first time
+ Conditional rendering turns true
+ Page loads
+
+Mounting in Functional Components
+Using useEffect:
+
+useEffect(() => {
+  console.log("Component Mounted");
+}, []);
+
+ Empty dependency array → runs only once
+ Equivalent to componentDidMount
+
+What is Unmounting?
+-------------------
+Unmounting =
+ When a component is removed from the DOM.
+
+ Happens When:
+ User navigates away
+ Conditional rendering turns false
+ Parent removes component
+
+Unmounting in Functional Components
+
+useEffect(() => {
+  return () => {
+    console.log("Component Unmounted");
+  };
+}, []);
+
+
+ Cleanup function runs on unmount
+ Equivalent to componentWillUnmount
+
+Mount → Update → Unmount Flow
+---------------------------
+1. Mount
+2. Re-render (updates)
+3. Cleanup
+4. Re-run effect (if dependencies changed)
+5. Unmount → cleanup
+
+Complete Example
+
+function Timer() {
+  useEffect(() => {
+    console.log("Mounted");
+
+    const id = setInterval(() => {
+      console.log("Running...");
+    }, 1000);
+
+    return () => {
+      console.log("Unmounted");
+      clearInterval(id);
+    };
+  }, []);
+
+  return <h1>Timer</h1>;
+}
+
+Why Unmount Cleanup Is Critical?
+-----------------------------------
+Without cleanup:
+ Memory leaks
+ Duplicate subscriptions
+ Multiple intervals running
+ API race conditions
+ Performance issues
+
+Interview-Level Understanding
+-----------------------------
+ Q: When does cleanup run?
+
+ Before effect re-runs
+ On unmount
+
+ Q: What causes unmount?
+
+ Route change
+ Conditional rendering
+ Key change
+ Parent removal
+
+Summary
+-------------
+ HOC
+--------
+ Function that takes component
+ Returns enhanced component
+ Used for logic reuse
+ Pattern, not API
+
+ Mounting
+ ---------
+ Component inserted into DOM
+ useEffect(() => {}, [])
+
+ Unmounting
+ --------------
+ Component removed from DOM
+ Cleanup function runs

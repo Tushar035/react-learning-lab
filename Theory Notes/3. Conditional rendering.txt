@@ -1,0 +1,306 @@
+3. Conditional rendering  
+--------------------------
+
+What Is Conditional Rendering?
+
+Conditional rendering means:
+Showing different UI based on a condition
+
+Just like in real life:
+
+ If you are logged in → show Dashboard
+ If you are not logged in → show Login page
+
+React uses JavaScript conditions to decide what to display.
+
+Why Conditional Rendering Is Important
+
+Without it:
+-------------
+ Apps would show everything to everyone
+ No control over user experience
+
+With it:
+----------
+ Personalized UI
+ Secure screens
+ Clean UX
+
+Common Ways to Do Conditional Rendering
+-------------------------
+1.if / else (Clear & Readable)  -- not a best practice in jsx
+------------------------------
+ Example: Login Check
+
+function App() {
+  const isLoggedIn = true;
+
+  if (isLoggedIn) {
+    return <Dashboard />;
+  } else {
+    return <Login />;
+  }
+}
+
+RealWorld Use Case
+-------------------
+ Authentication
+ Rolebased screens
+
+2.Ternary Operator (? :) (Most Used)
+-----------------------------------
+ Example
+function Status({ isOnline }) {
+  return (
+    <h2>{isOnline ? "User Online" : "User Offline"}</h2>
+  );
+}
+
+ RealWorld Use Case
+
+ Online / Offline status
+ Active / Inactive states
+
+3.Logical AND (&&) (Show or Hide)
+------------------------------------
+ Example
+
+function Notification({ count }) {
+  return (
+    <>
+      {count > 0 && <p>You have {count} notifications</p>}
+    </>
+  );
+}
+
+ RealWorld Use Case
+-------------------
+ Show badge only when count > 0
+ Show error message only if exists
+
+4. Conditional Rendering with Functions
+------------------------------------
+ Example
+function renderContent(isAdmin) {
+  if (isAdmin) {
+    return <AdminPanel />;
+  }
+  return <UserPanel />;
+}
+
+function App() {
+  return renderContent(true);
+}
+
+ RealWorld Use Case
+-------------------
+ Complex UI logic
+ Cleaner 
+
+
+
+5.Conditional Rendering Using Component Map (Dictionary)
+---------------------------------------------
+ Example
+ 
+ function parent(){
+ let status = Api call;
+ return (
+	 <>
+	 <App status ={status}>
+	 </>
+ )
+ 
+ }
+
+function App({ status }) {
+	const views = {
+	  loading: <Loader />,
+	  success: <Success />,
+	  error: <Error />
+	};
+  return views[status];
+}
+
+
+ RealWorld Use Case
+--------------------
+ API states
+ Stepbased flows
+
+
+
+ RealWorld Use Cases 
+-----------------------
+Authentication (Login / Logout)
+
+function App({ isLoggedIn }) {
+  return isLoggedIn ? <Dashboard /> : <Login />;
+}
+
+
+Used in:
+
+ Banking apps
+ Admin dashboards
+ SaaS platforms
+
+RoleBased Access (Admin / User)
+--------------------------------
+function Menu({ role }) {
+  return (
+    <>
+      {role === "admin" && <AdminMenu />}
+      {role === "user" && <UserMenu />}
+    </>
+  );
+}
+
+
+Used in:
+---------
+ Enterprise apps
+ HR systems
+
+
+
+Loading State (API Calls)
+--------------------------
+
+function DataView({ loading, data }) {
+  if (loading) return <Loader />;
+  if (!data) return <NoData />;
+  return <DataTable data={data} />;
+}
+
+function DataView({ loading, data }) {
+   return ({if (loading <Loader />;
+            if (!data)  <NoData />;
+  return <DataTable data={data} />});
+}
+
+Used in:
+----------
+ Dashboards
+ Reports
+ Analytics apps
+
+Error Handling UI
+---------------------
+{error && <p className="error">{error}</p>}
+
+Used in:
+----------
+ Forms
+ API responses
+ Payment screens
+
+Feature Toggle
+---------------------
+
+{isFeatureEnabled && <NewFeature />}
+
+Used in:
+-----------
+ A/B testing
+ Gradual feature rollout
+
+
+
+ Form Validation Messages
+--------------------------
+{emailError && <span>Email is invalid</span>}
+
+Used in:
+----------
+ Login forms
+ Signup forms
+
+  Mobile vs Desktop UI
+---------------------------
+
+{isMobile ? <MobileMenu /> : <DesktopMenu />}
+
+
+Used in:
+--------
+ Responsive apps
+
+ Common Mistakes
+-------------------
+1.Using if inside jsx
+-----------------
+
+{/  This will break /}
+{if(isLoggedIn) {...}}
+
+-Use ternary or &&
+
+2.Returning false or undefined unintentionally
+---------------------------------------------
+
+
+Best Practices
+--------------
+ Keep jsx clean
+ Move complex logic outside jsx
+ Use meaningful variable names
+ Avoid deeply nested conditions
+
+  InterviewReady Summary
+------------------------------
+Conditional rendering in React allows components to display different UI based on conditions like state, props, or user actions.
+
+Using if Inside JSX — Why It Does NOT Work
+-------------------------------------------
+
+JSX is not normal JavaScript
+JSX expects values, not statements
+if is a statement, not a value
+
+So React cannot render if directly inside JSX.
+
+Wrong Way (Very Common Beginner Mistake)
+----------------------------------------
+function App({ isLoggedIn }) {
+  return (
+    <div>
+      {if (isLoggedIn) {
+        <Dashboard />
+      }}
+    </div>
+  );
+}
+
+Why This Fails
+--------------
+ JSX {} accepts expressions
+ if does not return anything
+ React doesn’t know what to render
+
+Result → Syntax error
+
+Key Rule to Remember
+---------------------------
+JSX allows expressions, not statements
+
+Statements (NOT allowed)
+------------------------
+ if
+ for
+ while
+ switch
+
+Expressions (Allowed)
+--------------------
+ Ternary (? :)
+ Logical AND (&&)
+ Function calls
+ Variables
+ Array.map()
+
+ Interview-Ready Answer
+
+You cannot use if directly inside JSX because JSX only allows expressions, not statements. Instead, conditions should be handled before JSX or using ternary or logical operators.
+
+

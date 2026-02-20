@@ -1,0 +1,329 @@
+10. Rules of Hooks, Custom Hooks & Sharing Logic
+--------------------------------------------------
+
+1️.Rules of Hooks
+-----------------
+Hooks are special functions introduced in React 16.8 that let you use state and lifecycle features in functional components.
+
+Examples:
+ useState
+ useEffect
+ useRef
+ useMemo
+ useCallback
+
+
+There Are ONLY 2 Rules of Hooks
+
+Rule 1: Only Call Hooks at the Top Level
+--------------------------------------------
+ Wrong:
+
+jsx
+if (isLoggedIn) {
+  const [count, setCount] = useState(0);
+}
+
+Why wrong?
+Hooks must not be called conditionally.
+
+React relies on hook call order. If order changes between renders → bugs happen.
+
+Correct:
+
+jsx
+function Counter({ isLoggedIn }) {
+  const [count, setCount] = useState(0);
+
+  if (!isLoggedIn) {
+    return <h1>Please login</h1>;
+  }
+
+  return (
+    <>
+      <h1>{count}</h1>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </>
+  );
+}
+
+Rule 2: Only Call Hooks from React Functions
+------------------------------------------------
+Hooks can only be used in:
+
+ React functional components
+ 
+Custom Hooks
+
+ Wrong:
+
+jsx
+function helper() {
+  const [value, setValue] = useState(0); //  Not allowed - not a Component
+}
+
+ Correct (inside component):
+
+jsx
+function Example() {
+  const [value, setValue] = useState(0);
+  return <div>{value}</div>;
+}
+
+
+Why Rules Exist?
+React tracks hooks by their execution order.
+
+Render 1:
+useState
+useEffect
+useState
+
+
+Render 2:
+useState
+useState   (Order changed)
+
+Now React gets confused → wrong state mapping.
+
+
+Interview Question
+----------------------
+Q: Why can't hooks be used inside loops or conditions?
+Answer: Because React depends on consistent hook call order between renders.
+
+---
+
+2️.Custom Hooks
+-------------------
+Custom Hooks are reusable functions that use other hooks.
+
+They must start with use.
+
+Basic Custom Hook Example
+
+Problem:
+
+We want to track window width in multiple components.
+
+Without Custom Hook
+
+jsx
+useEffect(() => {
+  const handleResize = () => {
+    setWidth(window.innerWidth);
+  };
+
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+}, []);
+
+
+This logic will be duplicated everywhere.
+
+Create Custom Hook
+-------------------
+jsx
+import { useState, useEffect } from "react";
+
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return width;
+}
+
+Using Custom Hook
+---------------------
+jsx
+function ComponentA() {
+  const width = useWindowWidth();
+  return <h1>Width: {width}</h1>;
+}
+
+function ComponentB() {
+  const width = useWindowWidth();
+  return <h2>Screen: {width}</h2>;
+}
+
+Dry Run
+------------
+1. Component renders
+2. useWindowWidth() runs
+3. It creates state
+4. It attaches event listener
+5. Returns width
+6. On resize → state updates → re-render
+
+Important Notes
+------------
+ Each component gets its own state.
+ Custom hook DOES NOT share state automatically.
+ It shares logic, not data.
+
+3️.Sharing Logic with Hooks
+---------------------------
+Before Hooks, we used:
+
+ Higher Order Components (HOC)
+ Render Props
+
+Hooks replaced them.
+
+Example: Fetch API Logic
+
+Without custom hook:
+
+jsx
+useEffect(() => {
+  fetch("/api/users")
+    .then(res => res.json())
+    .then(data => setUsers(data));
+}, []);
+
+
+Now imagine 10 components using same logic 
+
+Create useFetch Hook
+-------------------
+jsx
+import { useState, useEffect } from "react";
+
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          setData(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+
+Using It
+-------------
+jsx
+function Users() {
+  const { data, loading, error } = useFetch("/api/users");
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error occurred</p>;
+
+  return (
+    <ul>
+      {data.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+
+Advanced Example: useDebounce Hook
+--------------------------------------
+jsx
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+
+Use Case:
+
+ Search input
+ API call optimization
+ Performance improvement
+
+Real-World Custom Hooks Examples
+---------------------------------
+ useAuth
+ useForm
+ useLocalStorage
+ usePagination
+ useInfiniteScroll
+ useOnlineStatus
+ usePrevious
+ useTheme
+
+Common Mistakes
+-----------------
+ Calling hooks conditionally
+ Forgetting dependencies in useEffect
+ Not cleaning up event listeners
+ Sharing state incorrectly
+
+Interview-Level Questions
+--------------------------
+1. Difference between Custom Hook and Component?
+2. Can Custom Hook share state?
+3. Why must custom hook start with "use"?
+4. How do hooks maintain state?
+5. Explain hook execution order.
+6. Can we use hook inside normal function?
+7. How to avoid infinite loop in useEffect?
+
+Senior-Level Understanding
+--------------------------
+Hooks:
+
+ Enable composition
+ Promote reusable logic
+ Replace HOC & Render Props
+ Make code cleaner
+ Improve maintainability
+
+
+Summary
+----------
+| Topic          | Key Concept                      |
+| -------------- | -------------------------------- |
+| Rules of Hooks | Top-level & React functions only |
+| Custom Hooks   | Reusable logic                   |
+| Sharing Logic  | Abstract repetitive behavior     |
+| Important      | Hooks share logic, not state     |
+
+

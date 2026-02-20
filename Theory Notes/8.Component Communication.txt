@@ -1,0 +1,361 @@
+ 8. COMPONENT DESIGN & COMMUNICATION
+ -------------------------------------
+
+PART 1: Controlled vs Uncontrolled Components
+-----------------------------------------------
+
+1.Controlled Components
+----------------------
+
+A Controlled Component is a form element whose value is controlled by React state.
+React becomes the "single source of truth".
+
+Basic Example
+---------------
+import React, { useState } from "react";
+
+function LoginForm() {
+  const [email, setEmail] = useState("");
+
+  return (
+    <div>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <p>Typed Email: {email}</p>
+    </div>
+  );
+}
+
+How It Works
+
+value comes from state
+onChange updates state
+React controls the input
+
+Why Controlled Components Are Powerful
+-----------------------------------------
+ Easy validation
+ Easy conditional rendering
+ Easy form reset
+ Predictable behavior
+ Better for complex forms
+
+Real-World Example (Form Validation)
+-------------------------------------
+function Signup() {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+
+    if (value.length < 6) {
+      setError("Password must be at least 6 characters");
+    } else {
+      setError("");
+    }
+  };
+
+  return (
+    <>
+      <input type="password" value={password} onChange={handleChange} />
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </>
+  );
+}
+
+
+Interview Questions
+-----------------------
+Why are controlled components preferred?
+What happens if you remove onChange?
+What happens if value is undefined?
+Difference between value and defaultValue?
+
+2.Uncontrolled Components
+----------------------------
+An Uncontrolled Component stores data in the DOM itself.
+
+React does NOT control it.
+
+Example Using useRef
+-----------------------
+import React, { useRef } from "react";
+
+function LoginForm() {
+  const inputRef = useRef();
+
+  const handleSubmit = () => {
+    alert(inputRef.current.value);
+  };
+
+  return (
+    <>
+      <input type="text" ref={inputRef} /> -- value prop not present
+      <button onClick={handleSubmit}>Submit</button>
+    </>
+  );
+}
+
+How It Works
+--------------
+No useState
+Value stored inside DOM
+Access using ref
+
+When To Use Uncontrolled?
+---------------------------
+ File inputs
+ Simple forms
+ Performance-heavy large forms
+ Third-party integrations
+
+Controlled vs Uncontrolled Comparison
+------------------------------------
+Feature 	Controlled	Uncontrolled
+
+Data Stored 	React  State DOM
+Validation  	Easy	Hard
+Real-time control	Yes	No
+Recommended	    Yes  	Sometimes
+
+PART 2: Component Communication
+---------------------------
+
+Parent → Child Communication
+------------------------------
+Using Props
+
+Example
+
+function Parent() {
+  const message = "Hello from Parent";
+
+  return <Child text={message} />;
+}
+
+function Child({ text }) {
+  return <h1>{text}</h1>;
+}
+
+Explanation
+--------------
+Parent passes data
+Child receives via props
+Unidirectional data flow
+
+Interview Trap
+--------------
+Can child modify parent state directly?
+No. Must use callback.
+
+
+Child → Parent Communication
+----------------------------------
+Using Callback Functions
+
+Example
+
+function Parent() {
+  const [message, setMessage] = useState("");
+
+  return (
+    <>
+      <Child sendData={setMessage} />
+      <p>Message: {message}</p>
+    </>
+  );
+}
+
+function Child({ sendData }) {
+  return (
+    <button onClick={() => sendData("Hello Parent!")}>
+      Send Message
+    </button>
+  );
+}
+
+How It Works
+
+1. Parent passes function
+2. Child calls function
+3. Parent updates state
+
+Sibling Communication
+---------------------
+Lift state up to common parent
+
+Example
+--------
+function Parent() {
+  const [count, setCount] = useState(0); --> common state
+
+  return (
+    <>
+      <Counter count={count} />
+      <Buttons setCount={setCount} />
+    </>
+  );
+}
+
+function Counter({ count }) {
+  return <h1>{count}</h1>;
+}
+
+function Buttons({ setCount }) {
+  return (
+    <button onClick={() => setCount((prev) => prev + 1)}>
+      Increment
+    </button>
+  );
+}
+
+PART 3: Props Drilling & Solutions
+---------------------------------
+Props Drilling
+--------------
+Passing props through multiple levels even if intermediate components don’t use them.
+
+Example
+
+function App() {
+  return <Level1 name="Tushar" />;
+}
+
+function Level1({ name }) {
+  return <Level2 name={name} />;
+}
+
+function Level2({ name }) {
+  return <Level3 name={name} />;
+}
+
+function Level3({ name }) {
+  return <h1>{name}</h1>;
+}
+
+Problem
+--------
+Hard to maintain
+Hard to scale
+Ugly code
+
+Props Drilling Solutions
+-------------------------
+1. Context API  --> props drilling also used for simple global state management
+--------------
+import React, { createContext, useContext } from "react";
+
+const UserContext = createContext(); -> first step create context
+
+function App() {
+  return (
+    <UserContext.Provider value="Tushar"> --> second step provide context
+      <Level1 />
+    </UserContext.Provider>
+  );
+}
+
+function Level1() {
+  return <Level3 />;
+}
+
+function Level3() {
+  const name = useContext(UserContext); --> Third step consume Context (useContext)
+  return <h1>{name}</h1>;
+}
+
+2. Component Composition
+-------------------------
+Instead of passing data, pass components.
+
+function App() {
+  return <Layout header={<Header />} />;
+}
+
+function Layout({ header }) {
+  return <div>{header}</div>;
+}
+
+PART 4: Container vs Presentational Components
+----------------------------------------------
+
+Container vs Presentational
+------------------------------
+Presentational Component
+UI only
+No business logic
+Reusable
+
+
+function Button({ text, onClick }) {
+  return <button onClick={onClick}>{text}</button>;
+}
+
+
+Container Component
+-------------------
+Handles logic
+Fetches data
+Passes props
+
+
+function ButtonContainer() {
+  const handleClick = () => {
+    console.log("Clicked");
+  };
+
+  return <Button text="Click Me" onClick={handleClick} />;
+}
+
+Why Important?
+---------------
+ Clean architecture
+ Separation of concerns
+ Better testability
+
+PART 5: Reusable Component Design
+--------------------------------------
+
+Reusable Component Design
+--------------------------
+Example: Reusable Input Component
+
+function Input({ label, value, onChange, type = "text" }) {
+  return (
+    <div>
+      <label>{label}</label>
+      <input type={type} value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+Usage
+-------
+<Input
+  label="Email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
+
+Best Practices
+----------------
+ Accept props instead of hardcoding
+ Make components configurable
+ Avoid tight coupling
+ Support children when needed
+ Use composition over inheritance
+
+Final Interview Scenario
+------------------------------
+“Design a form system that:”
+
+Uses controlled inputs  - value , handler function
+Avoids prop drilling - context (create context -> provide context -> useContext)
+Has reusable components - props (based on component and its resuseblity) , onchange event handler function
+Separates logic from UI 
+Supports validation - controlled components

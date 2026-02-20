@@ -1,0 +1,259 @@
+2. React Props
+
+In React JSX, string literals are static text written directly, while expressions are dynamic JavaScript values written inside curly braces {}. JSX allows expressions but not statements.
+
+React Props 
+-----------
+What Are Props in React?
+
+Props (short for properties) are used to pass data from one component to another.
+Arguments passed to a function
+
+Props are read-only
+Data flows from parent to child
+Props make components reusable
+
+
+ Basic Props Example
+
+Parent Component
+------------------
+function App() {
+  return <Greeting name="Tushar" />;
+}
+
+
+Child Component
+-----------------
+function Greeting(props) {
+  return <h1>Hello {props.name}</h1>;
+}
+
+Props Are Immutable (Cannot Be Changed)
+----------------------------
+Wrong:
+------
+ props.name = "Rohit";
+
+Correct:
+--------------
+ Props should only be used, not modified
+ State is used for changeable data  --> VIMP
+
+spread(...) operator
+rest(....) operator
+map
+
+All Common Prop Data Types (With Examples)
+
+1. String Props
+---------------------
+function User({ name }) {
+  return <p>Name: {name}</p>;
+}
+
+<User name="Tushar" />
+
+
+2️. Number Props
+---------------------
+function Age({ age }) {
+  return <p>Age: {age}</p>;
+}
+
+<Age age={25} />
+
+
+3️. Boolean Props
+------------------
+<Status isOnline={true} />
+
+function Status({ isOnline }) {
+  return <p>{isOnline ? "Online" : "Offline"}</p>;
+}
+
+
+4️. Array Props
+----------------
+<Skills skills={["React", "C", ".NET"]} />
+
+function Skills({ skills }) {
+  return (
+    <ul>
+      {skills.map(skill => (
+        <li key={skill}>{skill}</li>
+      ))}
+    </ul>
+  );
+}
+
+
+5. Object Props
+------------------
+<Profile user={{ name: "Tushar", role: "Developer" }} />
+
+function Profile({ user }) {
+  return (
+    <p>
+      {user.name} - {user.role}
+    </p>
+  );
+}
+
+6️. Function Props (Callback Props) --> possible answer to Question : Is there any way to pass data from child to parent ?
+----------------------------------
+Used when child needs to talk back to parent.
+
+function Parent() {
+  function showMessage() {
+    alert("Hello from Parent");
+  }
+
+  return <Child onClickHandler={showMessage} />;
+}
+
+function Child({ onClickHandler }) {
+  return <button onClick={onClickHandler}>Click</button>;
+}
+
+7️. Element Props
+---------------------
+function Box({ content }) {
+  return <div>{content}</div>;
+}
+
+<Box content={<h2>Hello World</h2>} />
+
+8️. Component as Props (Advanced & Powerful) -> VIMP
+-------------------------------------------
+Passing Component
+
+function App() {
+  return <Layout header={<Header />} />;
+}
+
+function Header() {
+  return <h1>My App Header</h1>;
+}
+
+function Layout({ header }) {
+  return (
+    <div>
+      {header}
+      <p>Main content</p>
+    </div>
+  );
+}
+
+9.children – Special Prop in React
+------------------------------------
+children means whatever is written between opening and closing tags.
+
+Example Using children
+
+function Card({ children }) {
+  return (
+    <div style={{ border: "1px solid gray", padding: "10px" }}>
+      {children}
+    </div>
+  );
+}
+
+Usage
+<Card>
+  <h2>User Info</h2>
+  <p>Name: Tushar</p>
+</Card>
+
+This is composition and is used heavily in real projects.
+
+Props Destructuring (Cleaner Code)
+------------------------------------
+Without Destructuring 
+------------------------
+function User(props) {
+  return <p>{props.name}</p>;
+}
+
+With Destructuring 
+--------------------
+function User({ name }) {
+  return <p>{name}</p>;
+}
+
+Destructuring in Function Parameters
+-------------------------------------
+function Profile({ name, age, role }) {
+  return (
+    <p>
+      {name} - {age} - {role}
+    </p>
+  );
+}
+
+Destructuring Inside Function Body
+-------------------------------------
+
+function Profile(props) {
+  const { name, age } = props;
+  return <p>{name} - {age}</p>;
+}
+
+
+Conditional Rendering Using Props
+----------------------------------
+
+function Message({ isLoggedIn }) {
+  return (
+    <h2>
+      {isLoggedIn ? "Welcome Back" : "Please Login"}
+    </h2>
+  );
+}
+
+
+Props vs State (Quick Difference)
+--------------------------------------
+| Props                    | State                       |
+|--------------------------|-----------------------------|
+| Passed from parent       | Managed inside component    |
+| Read-only                | Can change                  |
+| Makes component reusable | Makes component interactive |
+
+
+Props Drilling & Solutions
+--------------------------
+What Is Props Drilling?
+
+Props drilling happens when:
+Data is passed through many layers
+Intermediate components don’t need the data
+Hard to maintain
+Messy code
+
+They just forward it
+
+Props Drilling Example
+function App() {
+  return <Parent user="Tushar" />;
+}
+
+function Parent({ user }) {
+  return <Child user={user} />;  --> not used in Parent
+}
+
+function Child({ user }) {
+  return <GrandChild user={user} />;  --> not used in Child
+}
+
+function GrandChild({ user }) {
+  return <h1>Hello {user}</h1>;
+}
+
+
+Why Props Drilling Is a Problem
+-------------------------------
+Too many props
+Tight coupling
+Hard to refactor
+Difficult debugging
