@@ -1,0 +1,427 @@
+
+ 1. What is Routing?
+-----------------------
+🔹 Theory
+
+Routing is the mechanism that determines:
+
+> “Which component should render when a user visits a specific URL?”
+
+
+In traditional websites:
+
+Every URL loads a new HTML page (Server-side rendering)
+
+
+In React SPA:
+
+The app loads once
+JavaScript changes the view dynamically
+No full page refresh
+
+This is called Client-Side Routing.
+
+ 2. Client-Side vs Server-Side Routing
+----------------------------------------
+Feature	Server-Side	Client-Side (React)
+
+Page Reload	Yes	No
+Speed	Slower	Faster
+User Experience	Traditional	Smooth
+Technology	Backend Framework	React Router
+
+React uses HTML5 History API to change the URL without refreshing the page.
+
+3. React Router Library
+-------------------------
+We use:
+ react-router-dom
+ -----------------
+It provides:
+
+BrowserRouter
+Routes
+Route
+Link
+NavLink
+useNavigate
+useParams
+useSearchParams
+Outlet
+Navigate
+
+4. Installation
+-------------------
+npm install react-router-dom
+
+For Vite:
+
+npm create vite@latest
+npm install react-router-dom
+
+5. Basic Routing Setup
+--------------------------
+ Theory
+
+To enable routing:
+
+1. Wrap your app with BrowserRouter
+2. Define routes using Routes
+3. Map paths using Route
+
+Step 1: Wrap App with BrowserRouter
+
+// main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { BrowserRouter } from "react-router-dom";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
+
+ Theory
+
+BrowserRouter listens to URL changes.
+It uses the browser’s history stack.
+It makes routing available in the app.
+
+Step 2: Define Routes
+
+// App.jsx
+import { Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import About from "./pages/About";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+    </Routes>
+  );
+}
+
+export default App;
+
+🧠 Theory
+
+Routes replaces Switch (v6)
+Route defines:
+path → URL
+element → Component to render
+
+
+6. Navigation in React Router
+
+Link (Declarative Navigation)
+
+Theory
+Link works like <a> but:
+Does NOT reload page
+Uses internal navigation
+
+import { Link } from "react-router-dom";
+
+function Navbar() {
+  return (
+    <nav>
+      <Link to="/">Home</Link>
+      <Link to="/about">About</Link>
+    </nav>
+  );
+}
+
+NavLink (Active Styling)
+---------
+Theory
+
+Used when you want to:
+Highlight active route
+Show current page in navbar
+
+import { NavLink } from "react-router-dom";
+
+<NavLink
+  to="/about"
+  className={({ isActive }) =>
+    isActive ? "active-link" : ""
+  }
+>
+  About
+</NavLink>
+
+
+7. Dynamic Routing (URL Parameters)
+
+🔹 Theory
+
+Sometimes URLs contain dynamic values:
+
+/products/101
+
+Here 101 is dynamic.
+
+ Define Route
+
+<Route path="/products/:id" element={<ProductDetails />} />
+
+:id is called a URL parameter.
+
+
+ Access Parameter
+
+import { useParams } from "react-router-dom";
+
+function ProductDetails() {
+  const { id } = useParams();
+
+  return <h2>Product ID: {id}</h2>;
+}
+
+🧠 Theory
+
+useParams() extracts dynamic values from URL.
+
+Useful for API calls.
+
+
+ 8. Programmatic Navigation
+----------------------------
+🔹 Theory
+
+Sometimes navigation happens after:
+Login
+Form submission
+API success
+
+Use useNavigate.
+
+🔹 Example
+
+import { useNavigate } from "react-router-dom";
+
+function Login() {
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    navigate("/dashboard");
+  };
+
+  return <button onClick={handleLogin}>Login</button>;
+}
+
+
+9. Nested Routing
+-----------------
+🔹 Theory
+
+Used when:
+
+A route contains child routes
+Example: Dashboard
+
+/dashboard
+/dashboard/profile
+/dashboard/settings
+
+
+🔹 Define Nested Routes
+
+<Route path="/dashboard" element={<Dashboard />}>
+  <Route path="profile" element={<Profile />} />
+  <Route path="settings" element={<Settings />} />
+</Route>
+
+
+🔹 Dashboard Component
+
+import { Outlet, Link } from "react-router-dom";
+
+function Dashboard() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Link to="profile">Profile</Link>
+      <Link to="settings">Settings</Link>
+
+      <Outlet />
+    </div>
+  );
+}
+
+Theory
+
+Outlet renders child route
+Without Outlet → children won’t render
+
+
+ 10. Layout Routes (Shared UI)
+
+🔹 Theory
+
+Common UI elements:
+Header
+Sidebar
+Footer
+
+Instead of repeating, use Layout route.
+
+ Route Setup
+
+<Route path="/" element={<Layout />}>
+  <Route index element={<Home />} />
+  <Route path="about" element={<About />} />
+</Route>
+
+🔹 Layout Component
+
+import { Outlet } from "react-router-dom";
+
+function Layout() {
+  return (
+    <>
+      <header>Header</header>
+      <Outlet />
+      <footer>Footer</footer>
+    </>
+  );
+}
+
+
+11. Protected Routes (Authentication)
+
+🔹 Theory
+
+Restrict access to certain routes.
+Example:
+
+/dashboard → Only logged-in users
+
+🔹 ProtectedRoute Component
+
+import { Navigate } from "react-router-dom";
+
+function ProtectedRoute({ children }) {
+  const isAuthenticated = false;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+🔹 Usage
+
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
+
+12. Query Parameters
+--------------------
+Theory
+
+Example:
+/search?q=react
+
+ Code
+
+import { useSearchParams } from "react-router-dom";
+
+function Search() {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get("q");
+
+  return <h2>Search: {query}</h2>;
+}
+
+ 13. 404 Not Found
+-------------------
+<Route path="*" element={<NotFound />} />
+
+* matches any unmatched route.
+
+
+ 14. Lazy Loading (Performance Optimization)
+-------------------------------
+🔹 Theory
+
+Load component only when needed.
+Improves:
+Initial load time
+Performance
+
+🔹 Code
+
+import React, { Suspense, lazy } from "react";
+
+const Dashboard = lazy(() => import("./Dashboard"));
+
+<Route
+  path="/dashboard"
+  element={
+    <Suspense fallback={<h2>Loading...</h2>}>
+      <Dashboard />
+    </Suspense>
+  }
+/>
+
+
+15. Scalable Folder Structure
+-------------------------------
+For large projects:
+
+src/
+│
+├── app/
+│   └── router.jsx
+│
+├── layouts/
+├── pages/
+├── features/
+├── routes/
+└── main.jsx
+
+
+16. How React Router Works Internally (Deep Theory)
+-------------------------------------
+1. BrowserRouter listens to URL changes.
+2. When URL changes:
+It checks matching Route.
+3. Matching route’s component renders.
+4. DOM updates without reload.
+
+It uses:
+
+History API
+Context API
+React reconciliation
+
+17. Best Practices
+------------------
+Centralize route definitions
+Use layout routes
+Protect sensitive routes
+Always add 404
+Use lazy loading
+Avoid deeply nested routes
+Separate route logic from UI
+
+Final Summary
+--------------
+React Routing allows you to:
+Build multi-page experience in SPA
+Create nested layouts
+Handle dynamic URLs
+Protect routes
+Optimize performance
+Scale enterprise applications
