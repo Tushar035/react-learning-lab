@@ -18,7 +18,6 @@ import NotFound from "../pages/shared/NotFound";
 import Unauthorized from "../pages/shared/Unauthorized";
 
 const Router = () => {
-  console.log("rendered router.");
   return (
     <Routes>
       {/* Public */}
