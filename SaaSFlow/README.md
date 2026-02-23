@@ -14,6 +14,7 @@ wrap App component in main.jsx with  BrowserRouter
 step 3 
 Folder structure
 
+```bash
 src/
 │
 ├── app/
@@ -50,7 +51,7 @@ src/
 │
 ├── main.jsx
 └── App.jsx
-
+```
 
 # 🌍 First Understand the Philosophy
 
