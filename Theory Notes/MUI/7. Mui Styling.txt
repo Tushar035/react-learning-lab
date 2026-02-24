@@ -1,4 +1,4 @@
- Styling in MUI 
+ Topic 7 : Styling in MUI 
 
 Styling in Material UI (MUI) is one of its strongest features.
 

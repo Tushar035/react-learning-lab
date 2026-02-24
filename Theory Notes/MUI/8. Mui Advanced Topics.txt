@@ -1,4 +1,4 @@
-🚀 Advanced MUI Topics – Enterprise-Level Guide
+🚀 Topic 8: Advanced MUI Topics – Enterprise-Level Guide
 
 (Definitions + Architecture + Code Examples)
 

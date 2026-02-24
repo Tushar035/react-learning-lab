@@ -1,4 +1,4 @@
-🧭 MUI Core Components – Navigation & 💬 Feedback
+🧭 Topic 6: MUI Core Components – Navigation & 💬 Feedback
 
 (Definitions + Core Concepts + Code Examples)
 

@@ -1,4 +1,4 @@
-📑 MUI Core Components – Data Display (Definitions + Concepts + Code)
+📑 Topic 5: MUI Core Components – Data Display (Definitions + Concepts + Code)
 
 Displaying data clearly is just as important as collecting it.
 Typography, tables, cards, lists — these components determine readability, hierarchy, and usability.
