@@ -1,0 +1,308 @@
+Complete master list of UI element names 
+-------------------------------------------
+
+This list covers:
+Web
+Mobile
+Desktop
+SaaS dashboards
+Admin panels
+Enterprise apps
+Modern design systems (Material, Apple HIG, Fluent, etc.)
+
+
+🧭 1️⃣ Navigation Components
+----------------------------
+App Bar
+Top Bar
+Navigation Bar
+Navbar
+Sidebar
+Drawer
+Navigation Drawer
+Bottom Navigation
+Tab Bar
+Tabs
+Breadcrumb
+Pagination
+Stepper
+Menu
+Dropdown Menu
+Mega Menu
+Context Menu
+Command Palette
+Toolbar
+Segmented Control
+Anchor Navigation
+Floating Action Button (FAB)
+Backdrop
+Rail Navigation
+Hamburger Menu
+Dock
+Navigation Rail
+Carousel Navigation Dots
+Scrollspy
+Sitemap
+Tree Navigation
+Accordion Navigation
+
+
+2️⃣ Input / Form Components
+--------------------------
+Text Inputs
+-----------
+Text Field
+Text Input
+Outlined Input
+Filled Input
+Standard Input
+Password Field
+Email Field
+Search Field
+Number Input
+Tel Input
+URL Input
+Multiline Textarea
+Autocomplete Input
+Combobox
+Token Input
+OTP Input
+Pin Input
+Rich Text Editor
+Markdown Editor
+Code Editor
+
+Selection Controls
+------------------
+Checkbox
+Checkbox Group
+Radio Button
+Radio Group
+Switch
+Toggle Button
+Toggle Group
+Slider
+Range Slider
+Vertical Slider
+Date Picker
+Date Range Picker
+Time Picker
+DateTime Picker
+Month Picker
+Year Picker
+Calendar
+Select
+Multi Select
+Creatable Select
+Cascader
+Transfer List
+Dual Listbox
+Color Picker
+File Upload
+Drag & Drop Upload
+Image Upload
+Signature Pad
+Rating
+Step Input
+Spinbox
+
+
+📦 3️⃣ Display Components
+---------------------------
+Card
+Card Header
+Card Footer
+List
+List Item
+List Group
+Description List
+Table
+Data Table
+Data Grid
+Virtualized List
+Masonry Grid
+Avatar
+Avatar Group
+Badge
+Chip
+Tag
+Pill
+Divider
+Icon
+Image
+Thumbnail
+Typography
+Heading
+Paragraph
+Link
+Code Block
+Preformatted Text
+Blockquote
+Highlight
+Skeleton
+Empty State
+Timeline
+Tree View
+Chart
+Graph
+Progress Bar
+Circular Progress
+Progress Step
+Stat Card
+KPI Card
+
+
+💬 4️⃣ Feedback Components
+---------------------------
+Alert
+Banner
+Snackbar
+Toast
+Notification
+Modal
+Dialog
+Confirmation Dialog
+Popover
+Tooltip
+Hover Card
+Bottom Sheet
+Action Sheet
+Loading Spinner
+Loader
+Skeleton Loader
+Backdrop Loader
+Inline Error
+Form Helper Text
+Status Indicator
+Badge Notification Dot
+Snackbar Queue
+
+
+
+🧱 5️⃣ Layout Components
+---------------------------
+Container
+Box
+Grid
+Row
+Column
+Stack
+Flex
+Spacer
+Divider
+Section
+Panel
+Split View
+Resizable Panel
+Portal
+Overlay
+Scroll Area
+Sticky Container
+Aspect Ratio Box
+
+
+📊 6️⃣ Data & Advanced Components
+---------------------------
+Data Grid Pro
+Pivot Table
+Kanban Board
+Drag and Drop List
+Infinite Scroll
+Virtual Scroll
+Tree Grid
+Nested Table
+Collapsible Panel
+Filter Panel
+Sort Control
+Search Bar
+Command Bar
+Dashboard Widget
+Activity Feed
+Audit Log Viewer
+Log Viewer
+Map View
+Calendar Scheduler
+Gantt Chart
+Heatmap
+Metrics Dashboard
+
+
+📱 7️⃣ Mobile-Specific Components
+----------------------------------
+Bottom Sheet
+Pull to Refresh
+Swipeable List Item
+Swipe Actions
+Floating Action Button
+Tab Bar
+App Bar
+Collapsible Header
+Snack Bar
+Segmented Control
+Safe Area View
+Gesture Handler
+Page Indicator
+Onboarding Carousel
+Step Indicator
+
+
+🧩 8️⃣ Utility / State Components
+---------------------------------
+Error Boundary
+Suspense Loader
+Permission Gate
+Feature Flag Wrapper
+Auth Guard
+Route Guard
+Theme Switcher
+Dark Mode Toggle
+Accessibility Switch
+Language Switcher
+Breadcrumb Generator
+
+
+🏗 9️⃣ Enterprise / Complex UI
+-------------------------------
+Workflow Builder
+Rule Builder
+Form Builder
+Report Builder
+Query Builder
+JSON Viewer
+Diff Viewer
+API Explorer
+Terminal View
+Console Panel
+Side Panel
+Inspector Panel
+Multi Step Wizard
+Advanced Filter Builder
+Access Control Matrix
+
+
+🎨 1️⃣0️⃣ Media & Interaction
+---------------------------
+Video Player
+Audio Player
+Image Gallery
+Carousel
+Lightbox
+Zoom Viewer
+Cropper
+Drag Area
+Drawing Canvas
+Signature Capture
+Map Marker
+AR Viewer
+
+
+🧠 1️⃣1️⃣ Accessibility Elements
+-------------------------------
+Skip Navigation Link
+Focus Trap
+Live Region
+ARIA Alert
+Screen Reader Text
+High Contrast Mode Toggle
+
+
