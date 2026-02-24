@@ -1,0 +1,504 @@
+
+🌍 What is Global State? (Very Simple Explanation)
+
+In React, every component has its own state.
+
+Example:
+
+const Counter = () => {
+  const [count, setCount] = useState(0);
+};
+
+This count belongs only to Counter.
+
+Now imagine:
+
+Navbar needs user name
+
+Dashboard needs user name
+
+Settings page needs user name
+
+Sidebar needs user role
+
+
+If you pass user from App → Navbar → Sidebar → Dashboard → Settings
+
+That’s called:
+
+👉 Prop drilling
+
+It becomes messy.
+
+So we use Global State.
+
+Global state = data that multiple components need.
+
+Examples:
+
+Logged-in user
+
+Theme (dark/light)
+
+Language
+
+Global loader
+
+Error messages
+
+
+
+---
+
+🔵 56. Context API (Step-by-Step Beginner Version)
+
+💡 What is Context API?
+
+Context API is React’s built-in way to share data across many components without passing props manually.
+
+Think of it like:
+
+> A global storage inside React.
+
+
+
+
+---
+
+🧱 How Context Works (3 Steps)
+
+1. Create context
+
+
+2. Create provider
+
+
+3. Use context
+
+
+
+Let’s build a simple example.
+
+
+---
+
+🪜 Step 1: Create Context
+
+Create file:
+
+📁 AuthContext.js
+
+import { createContext } from "react";
+
+export const AuthContext = createContext();
+
+That’s it.
+
+You just created a "global container".
+
+
+---
+
+🪜 Step 2: Create Provider
+
+Provider is like a wrapper that gives access to global state.
+
+📁 AuthProvider.js
+
+import { useState } from "react";
+import { AuthContext } from "./AuthContext";
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const login = (userData) => {
+    setUser(userData);
+  };
+
+  const logout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+What is happening here?
+
+user = global user state
+
+login() = function to update user
+
+logout() = function to remove user
+
+value = what we are sharing globally
+
+
+
+---
+
+🪜 Step 3: Wrap Your App
+
+In main.jsx or index.js:
+
+<AuthProvider>
+  <App />
+</AuthProvider>
+
+Now all components inside <App /> can access user.
+
+
+---
+
+🔵 57. useContext (How to Use Global State)
+
+Now we want to access user inside any component.
+
+Example:
+
+import { useContext } from "react";
+import { AuthContext } from "./AuthContext";
+
+const Dashboard = () => {
+  const { user, logout } = useContext(AuthContext);
+
+  return (
+    <div>
+      <h2>Welcome {user?.name}</h2>
+      <button onClick={logout}>Logout</button>
+    </div>
+  );
+};
+
+
+---
+
+🔍 What is useContext doing?
+
+It reads the nearest Provider and gives you access to:
+
+{ user, login, logout }
+
+
+---
+
+⚠ Important Beginner Concepts
+
+1️⃣ If Provider is missing → error
+
+If you don’t wrap your app in AuthProvider, useContext(AuthContext) will return undefined.
+
+
+---
+
+2️⃣ When user changes → components re-render
+
+If setUser() runs, all components using that context will re-render.
+
+That’s normal behavior.
+
+
+---
+
+🔐 58. Authentication Flow (Very Simple Version)
+
+Now let’s understand login system step-by-step.
+
+
+---
+
+🧩 What happens during login?
+
+1. User enters email/password
+
+
+2. Frontend sends request to backend
+
+
+3. Backend verifies
+
+
+4. Backend sends:
+
+accessToken
+
+user info
+
+
+
+5. Frontend saves token
+
+
+6. Frontend sets global user
+
+
+7. User is logged in
+
+
+
+
+---
+
+🧱 Example Login Code
+
+const login = async (email, password) => {
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    // Save token
+    localStorage.setItem("token", data.token);
+
+    // Save user globally
+    setUser(data.user);
+
+  } catch (error) {
+    console.error("Login failed");
+  }
+};
+
+
+---
+
+🔒 Protected Routes (Important)
+
+We don’t want non-logged users to access Dashboard.
+
+Example:
+
+import { Navigate } from "react-router-dom";
+
+const ProtectedRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+Usage:
+
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
+
+
+---
+
+🔵 59. Persisting State (Important for Freshers)
+
+Problem:
+
+If you refresh the page → user becomes null.
+
+Because React state resets.
+
+
+---
+
+Solution: Save in localStorage
+
+
+---
+
+🧱 Initialize user from localStorage
+
+const [user, setUser] = useState(() => {
+  const storedUser = localStorage.getItem("user");
+  return storedUser ? JSON.parse(storedUser) : null;
+});
+
+
+---
+
+🧱 Sync user to localStorage
+
+useEffect(() => {
+  if (user) {
+    localStorage.setItem("user", JSON.stringify(user));
+  } else {
+    localStorage.removeItem("user");
+  }
+}, [user]);
+
+
+---
+
+🧠 What is localStorage?
+
+Stores data in browser
+
+Data remains after refresh
+
+Data remains after closing browser
+
+
+
+---
+
+⚠ Security Warning (Important)
+
+Storing token in localStorage is easy but:
+
+It is vulnerable to XSS attacks.
+
+Better solution (advanced):
+
+Store token in httpOnly cookies (backend handles it)
+
+
+But for beginner projects → localStorage is okay.
+
+
+---
+
+🔵 60. Global Error & Loading State
+
+Imagine:
+
+Many API calls
+
+Every page has loading
+
+Every page has error message
+
+
+Instead of repeating:
+
+const [loading, setLoading] = useState(false);
+
+We create global UI state.
+
+
+---
+
+🧱 Create UIContext
+
+import { createContext, useState } from "react";
+
+export const UIContext = createContext();
+
+export const UIProvider = ({ children }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  return (
+    <UIContext.Provider value={{ loading, setLoading, error, setError }}>
+      {children}
+    </UIContext.Provider>
+  );
+};
+
+Wrap it:
+
+<AuthProvider>
+  <UIProvider>
+    <App />
+  </UIProvider>
+</AuthProvider>
+
+
+---
+
+🧱 Global Loader Component
+
+import { useContext } from "react";
+import { UIContext } from "./UIContext";
+
+const GlobalLoader = () => {
+  const { loading } = useContext(UIContext);
+
+  if (!loading) return null;
+
+  return <div>Loading...</div>;
+};
+
+Place <GlobalLoader /> inside App layout.
+
+
+---
+
+🧱 Use Loading in API Call
+
+const { setLoading, setError } = useContext(UIContext);
+
+const fetchUsers = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch("/api/users");
+  } catch (err) {
+    setError("Failed to load users");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+---
+
+🧠 Small Concepts Freshers Miss
+
+✔ Context is not a database
+
+It only stores data in memory.
+
+✔ Context does not persist automatically
+
+You must use localStorage.
+
+✔ Too much context causes re-renders
+
+Split contexts if needed:
+
+AuthContext
+
+UIContext
+
+ThemeContext
+
+
+✔ Don’t store huge arrays in context
+
+It can slow your app.
+
+
+---
+
+🏗 Beginner-Friendly Folder Structure
+
+/context
+  AuthContext.js
+  UIContext.js
+/components
+  ProtectedRoute.jsx
+  GlobalLoader.jsx
+/pages
+  Login.jsx
+  Dashboard.jsx
+
+
+---
+
+🧠 Simple Mental Model
+
+Context API = global variable inside React
+useContext = read that global variable
+Provider = makes it available
+localStorage = save data after refresh
+ProtectedRoute = block unauthorized users
+
