@@ -1,0 +1,564 @@
+🚀  Axios
+-----------
+1️⃣ What is Axios?
+
+Axios is a Promise-based HTTP client for:
+
+Browser (XHR / Fetch under the hood)
+
+Node.js (http module)
+
+
+It helps you:
+
+✔ Send HTTP requests
+✔ Automatically parse JSON
+✔ Handle 4xx/5xx as errors
+✔ Configure global defaults
+✔ Intercept requests & responses
+✔ Cancel requests
+✔ Set timeouts
+✔ Track upload/download progress
+
+
+---
+
+2️⃣ Axios Basic Usage
+
+Install
+
+npm install axios
+
+
+---
+
+Basic GET
+
+import axios from "axios";
+
+const fetchUsers = async () => {
+  const response = await axios.get("https://api.example.com/users");
+  return response.data;
+};
+
+
+---
+
+Response Structure
+
+{
+  data,
+  status,
+  statusText,
+  headers,
+  config,
+  request
+}
+
+Most important:
+
+response.data
+
+
+---
+
+3️⃣ Axios Configuration (Defaults)
+
+Instead of calling axios everywhere:
+
+Create Central API Client
+
+// apiClient.js
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "https://api.myapp.com",
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json"
+  },
+  withCredentials: true // important for cookies
+});
+
+export default api;
+
+
+---
+
+Why This Is Critical?
+
+Without this:
+
+Duplicate baseURL
+
+Hardcoded headers
+
+No global timeout
+
+No centralized error handling
+
+
+With instance: ✔ Clean
+✔ Scalable
+✔ Maintainable
+
+
+---
+
+4️⃣ Request Config Options (Small But Important)
+
+Axios supports:
+
+axios({
+  method: "post",
+  url: "/users",
+  data: { name: "John" },
+  params: { page: 1 },
+  timeout: 5000,
+  headers: {},
+  signal: controller.signal
+});
+
+Important concepts:
+
+Option	Purpose
+
+baseURL	Base API URL
+params	Query parameters
+data	Request body
+headers	Custom headers
+timeout	Cancel long requests
+withCredentials	Send cookies
+signal	Cancel request
+
+
+
+---
+
+5️⃣ Request Interceptors (Attach JWT)
+
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem("accessToken");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
+
+---
+
+Why Important?
+
+Attach token automatically
+
+Add custom headers
+
+Log request
+
+Modify request dynamically
+
+
+
+---
+
+6️⃣ Response Interceptors
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error("API Error:", error.response?.status);
+    return Promise.reject(error);
+  }
+);
+
+
+---
+
+7️⃣ Deep Error Handling
+
+Axios error object:
+
+{
+  message,
+  response,
+  request,
+  config,
+  code
+}
+
+Handle different error types:
+
+try {
+  await api.get("/users");
+} catch (error) {
+  if (error.response) {
+    console.log("Server error:", error.response.status);
+  } else if (error.request) {
+    console.log("Network error");
+  } else {
+    console.log("Unexpected error");
+  }
+}
+
+
+---
+
+8️⃣ Timeout Handling
+
+const api = axios.create({
+  timeout: 5000
+});
+
+Prevents hanging requests.
+
+
+---
+
+9️⃣ Cancel Requests (AbortController)
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  api.get("/users", { signal: controller.signal })
+    .then(res => setUsers(res.data))
+    .catch(err => {
+      if (err.name === "CanceledError") {
+        console.log("Cancelled");
+      }
+    });
+
+  return () => controller.abort();
+}, []);
+
+Prevents:
+
+Memory leaks
+
+State update on unmounted component
+
+
+
+---
+
+🔟 Retry Logic (Exponential Backoff)
+
+const fetchWithRetry = async (retries = 3, delay = 1000) => {
+  try {
+    return await api.get("/users");
+  } catch (error) {
+    if (retries === 0) throw error;
+    await new Promise(res => setTimeout(res, delay));
+    return fetchWithRetry(retries - 1, delay * 2);
+  }
+};
+
+Used for:
+
+Temporary network failure
+
+Server overload protection
+
+
+
+---
+
+🔥 1️⃣1️⃣ Axios + JWT Refresh Token Implementation (CRITICAL)
+
+This is real production-level implementation.
+
+Problem
+
+Access token expires → API returns 401 → user logged out.
+
+Better approach: Auto-refresh token and retry original request.
+
+
+---
+
+Step 1: Store Tokens
+
+Access Token → short expiry (15 min)
+
+Refresh Token → longer expiry
+
+
+
+---
+
+Step 2: Add Response Interceptor
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await axios.post("/auth/refresh", {
+          refreshToken: localStorage.getItem("refreshToken")
+        });
+
+        const newAccessToken = res.data.accessToken;
+        localStorage.setItem("accessToken", newAccessToken);
+
+        api.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
+        processQueue(null, newAccessToken);
+
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        window.location.href = "/login";
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+
+---
+
+What This Solves
+
+✔ Multiple parallel 401 requests
+✔ Avoids multiple refresh calls
+✔ Retries original request
+✔ Prevents logout if refresh works
+
+This is enterprise-level solution.
+
+
+---
+
+🔥 1️⃣2️⃣ Axios + React Query Integration
+
+React Query (TanStack Query) handles:
+
+✔ Caching
+✔ Background refetch
+✔ Retry
+✔ Loading states
+✔ Deduplication
+
+
+---
+
+Install
+
+npm install @tanstack/react-query
+
+
+---
+
+Setup Query Client
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
+<QueryClientProvider client={queryClient}>
+  <App />
+</QueryClientProvider>
+
+
+---
+
+Create Axios API Function
+
+const getUsers = async () => {
+  const response = await api.get("/users");
+  return response.data;
+};
+
+
+---
+
+Use with React Query
+
+import { useQuery } from "@tanstack/react-query";
+
+const Users = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["users"],
+    queryFn: getUsers,
+    retry: 2
+  });
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error occurred</p>;
+
+  return data.map(user => <p key={user.id}>{user.name}</p>);
+};
+
+
+---
+
+Why This Is Powerful?
+
+Axios handles:
+
+HTTP layer
+
+Token logic
+
+
+React Query handles:
+
+State management
+
+Caching
+
+Refetching
+
+Background sync
+
+
+This is modern frontend architecture.
+
+
+---
+
+🔥 1️⃣3️⃣ Advanced Axios Concepts (Often Missed)
+
+✔ Transform Request
+
+transformRequest: [(data) => {
+  return JSON.stringify(data);
+}]
+
+
+---
+
+✔ Transform Response
+
+transformResponse: [(data) => {
+  const parsed = JSON.parse(data);
+  return parsed.data;
+}]
+
+
+---
+
+✔ Params Serializer
+
+paramsSerializer: params => {
+  return new URLSearchParams(params).toString();
+}
+
+
+---
+
+✔ Upload Progress
+
+api.post("/upload", file, {
+  onUploadProgress: progressEvent => {
+    console.log(progressEvent.loaded);
+  }
+});
+
+
+---
+
+✔ Concurrency Control
+
+Promise.all([
+  api.get("/users"),
+  api.get("/posts")
+]);
+
+
+---
+
+✔ Cancel Previous Search Request
+
+Useful for search input debounce.
+
+
+---
+
+🏗 Recommended Folder Structure
+
+/api
+  apiClient.js
+  authInterceptor.js
+  userApi.js
+/hooks
+  useAuth.js
+
+
+---
+
+🧠 Senior-Level Axios Thinking
+
+A junior asks:
+
+> How to call API?
+
+
+
+A senior asks:
+
+> What if token expires?
+What if multiple 401 happen?
+What if request is slow?
+How do we retry safely?
+How do we prevent memory leaks?
+How do we log errors?
+
+
+
+That’s production mindset.
+
+
+---
+
+🚀 Final Summary
+
+Axios provides:
+
+✔ Global configuration
+✔ Automatic JSON parsing
+✔ Request/response interceptors
+✔ JWT handling
+✔ Refresh token retry logic
+✔ Timeout
+✔ Cancellation
+✔ Upload progress
+✔ React Query integration
+
