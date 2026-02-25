@@ -1,3 +1,47 @@
+### ✅ Core Redux
+
+* Store, reducers, actions
+* Middleware
+* Async with `createAsyncThunk`
+* Advanced builder pattern
+* Entity adapter
+* Memoized selectors
+
+### ✅ Modern Redux (What companies actually use)
+
+* **RTK Query (fundamentals + advanced)**
+* Tag invalidation
+* Optimistic updates
+* Caching strategies
+
+### ✅ Enterprise Patterns
+
+* Auth architecture
+* Token refresh strategy
+* Role-based access
+* Store reset patterns
+* Dynamic reducer injection
+* SSR + hydration
+* Micro-frontend strategy
+
+### ✅ Production-Level Topics
+
+* Redux Persist
+* Performance optimization
+* Production monitoring
+* Logging strategy
+* State corruption detection
+* Team workflow checklist
+
+### ✅ Professional-Level Additions
+
+* TypeScript mastery
+* Testing strategy
+* Architecture comparison (Redux vs Context vs Zustand)
+* Capstone full production architecture
+
+That is already beyond what most frontend developers know.
+
 # 📘 Blog 1: Redux Fundamentals (Ultra-Detailed & Fresher-Friendly)
 
 > 🎯 Target Audience: Freshers, .NET developers shifting to React, and anyone confused about Redux
