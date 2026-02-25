@@ -436,3 +436,155 @@ Axios provides:
 ✔ Cancellation
 ✔ Upload progress
 ✔ React Query integration
+
+
+# 🧠 What is an Interceptor in Axios? (Layman Explanation)
+--------------------------------------------------------------
+Imagine this 👇
+
+You work in an office building.
+Every person who enters or leaves must pass through **security at the gate**.
+
+Security can:
+---------------
+* Check ID
+* Add a stamp
+* Block entry
+* Log details
+
+👉 **Axios interceptor is that security gate.**
+
+It sits **between your app and the server** and can:
+
+* Modify requests before sending
+* Modify responses before your app receives them
+* Handle errors globally
+
+# 🔁 In Simple Words
+----------------------
+👉 Interceptor = **A middleman that automatically checks or modifies every API request and response**
+
+You write it once.
+
+It runs automatically for all API calls.
+
+# 📦 Real Life Example (For You as React Dev)
+------------------------------------------------
+Suppose:
+You have login system.
+After login, you get a **JWT token**.
+
+Now every API request must send:
+
+```
+Authorization: Bearer your_token
+```
+Instead of manually adding token in every API call ❌
+You use **interceptor** ✅
+Interceptor automatically attaches token to all requests.
+
+# 🎯 Two Types of Interceptors
+--------------------------------
+## 1️⃣ Request Interceptor
+---------------------------
+Runs **before request goes to server**
+
+Used for:
+------------
+* Add token
+* Add headers
+* Log request
+* Show loader
+
+## 2️⃣ Response Interceptor
+-----------------------------
+Runs **after response comes back**
+
+Used for:
+-----------
+* Handle 401 errors
+* Auto logout
+* Refresh token
+* Show global error message
+
+# 🏗 Simple Flow Diagram
+-----------------------
+```
+Component → Axios → Interceptor → Server
+Server → Interceptor → Component
+```
+
+Interceptor sits in middle.
+
+# 💻 Very Simple Example
+-------------------------
+```javascript
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "https://api.example.com"
+});
+
+// Request Interceptor
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+// Response Interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response.status === 401) {
+      alert("Session expired. Please login again.");
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+
+Now every API call automatically:
+------------------------------------
+* Sends token
+* Handles 401 error
+
+# 🔥 Real World Use Cases (Important for You)
+Since you're building authentication systems:
+
+Use interceptors for:
+
+✅ JWT token attach
+✅ Refresh token flow
+✅ Global error handling
+✅ Logging API calls
+✅ Loader handling
+✅ Redirect to login on 401
+
+# 🧍 Layman Analogy Summary
+Interceptor is like:
+------------------
+* 🛂 Airport security
+* 🚦 Traffic police checkpoint
+* 🏢 Office entry gate
+
+Everything must pass through it.
+
+# 🧠 Why Seniors Love Interceptors
+------------------------------------
+Without interceptor:
+-------------------
+* Repeated code everywhere ❌
+* Hard to maintain ❌
+
+With interceptor:
+-------------
+* Central control ✅
+* Clean architecture ✅
+* Professional codebase ✅
+
