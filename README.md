@@ -11,7 +11,7 @@ react-learning-lab/
 ├── SaaSFlow/           
 ├── Theory Notes/
 │   ├── React/          → React fundamentals & advanced concepts
-│   ├── Redux/          → Complete Redux master series (22 blogs)
+│   ├── Redux/          → Complete Redux master series
 │   ├── MUI/            → Material UI architecture & patterns
 │   └── Tailwind CSS/   → Utility-first styling patterns
 │
