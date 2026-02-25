@@ -1,0 +1,410 @@
+# 📘 Blog 12: RTK Query Fundamentals
+
+*(With Diagrams, Real Project Code, Mistakes & Edge Cases)*
+
+> 🎯 Goal: Understand modern API data fetching in Redux
+> 🎯 After this blog, you’ll stop writing most manual `createAsyncThunk` code.
+
+RTK Query is the biggest upgrade in modern Redux.
+
+If `createAsyncThunk` is powerful…
+
+RTK Query is enterprise-grade.
+
+---
+
+# 🧠 1️⃣ Why RTK Query Exists
+
+Before RTK Query, we used:
+
+* `createAsyncThunk`
+* Manual loading flags
+* Manual error handling
+* Manual caching
+* Manual deduplication
+* Manual refetching
+
+Too much repeated logic.
+
+👉 **Redux Toolkit** introduced RTK Query to solve this.
+
+RTK Query handles:
+
+* Data fetching
+* Caching
+* Deduplication
+* Background refetching
+* Loading states
+* Error states
+* Automatic hooks
+
+All automatically.
+
+---
+
+# 🏗 2️⃣ RTK Query Architecture Overview
+
+![Image](https://dcv19h61vib2d.cloudfront.net/thumbs/egghead-the-rtk-query-mental-model-eWEHA9EXH/egghead-the-rtk-query-mental-model-eWEHA9EXH.jpg)
+
+![Image](https://redux.js.org/assets/images/ReduxAsyncDataFlowDiagram-d97ff38a0f4da0f327163170ccc13e80.gif)
+
+![Image](https://www.tothenew.com/blog/wp-ttn-blog/uploads/2023/08/rtk-image.png)
+
+![Image](https://paper-attachments.dropboxusercontent.com/s_118F96EA7D62F679A47C2AD439C93DC9203009C47C6538B354532E5ADE3FA23F_1676627146090_redux-graphs.png)
+
+Flow:
+
+Component
+⬇
+Auto-generated Hook
+⬇
+RTK Query API Slice
+⬇
+Base Query (fetch/axios)
+⬇
+Server
+⬇
+Cache stored in Redux
+
+No manual loading flags needed.
+
+---
+
+# 🧩 3️⃣ Core Concepts
+
+RTK Query introduces:
+
+* `createApi()`
+* `fetchBaseQuery()`
+* Queries
+* Mutations
+* Auto-generated hooks
+* Caching system
+
+---
+
+# 🏢 4️⃣ Real Project Example – E-Commerce API
+
+We will build:
+
+* Fetch products
+* Fetch single product
+* Add product
+
+---
+
+# 🏗 5️⃣ Step 1: Create API Slice
+
+## 📁 apiSlice.js
+
+```js
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+export const apiSlice = createApi({
+  reducerPath: "api",
+  baseQuery: fetchBaseQuery({
+    baseUrl: "https://fakestoreapi.com/"
+  }),
+  endpoints: (builder) => ({
+    getProducts: builder.query({
+      query: () => "products"
+    }),
+
+    getProductById: builder.query({
+      query: (id) => `products/${id}`
+    }),
+
+    addProduct: builder.mutation({
+      query: (newProduct) => ({
+        url: "products",
+        method: "POST",
+        body: newProduct
+      })
+    })
+  })
+});
+
+export const {
+  useGetProductsQuery,
+  useGetProductByIdQuery,
+  useAddProductMutation
+} = apiSlice;
+```
+
+That’s it.
+
+No loading flags.
+No reducers.
+No thunks.
+
+---
+
+# 🏗 6️⃣ Step 2: Add API to Store
+
+```js
+import { configureStore } from "@reduxjs/toolkit";
+import { apiSlice } from "./apiSlice";
+
+export const store = configureStore({
+  reducer: {
+    [apiSlice.reducerPath]: apiSlice.reducer
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(apiSlice.middleware)
+});
+```
+
+Important:
+
+You MUST add both:
+
+* `api.reducer`
+* `api.middleware`
+
+---
+
+# 🔎 7️⃣ Step 3: Use in Component
+
+```js
+const Products = () => {
+  const { data, error, isLoading } = useGetProductsQuery();
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error occurred</p>;
+
+  return (
+    <>
+      {data.map(product => (
+        <div key={product.id}>{product.title}</div>
+      ))}
+    </>
+  );
+};
+```
+
+That’s it.
+
+No manual dispatch.
+No useEffect.
+No extraReducers.
+
+RTK Query handles everything.
+
+---
+
+# 🔄 8️⃣ Query vs Mutation
+
+| Query                | Mutation              |
+| -------------------- | --------------------- |
+| GET requests         | POST/PUT/DELETE       |
+| Cached automatically | Usually modifies data |
+| Auto refetching      | May invalidate cache  |
+| useQuery hook        | useMutation hook      |
+
+---
+
+# ⚡ 9️⃣ What Happens Internally?
+
+Flow:
+
+1️⃣ Component mounts
+2️⃣ Hook checks cache
+3️⃣ If no cache → send request
+4️⃣ Response stored in Redux
+5️⃣ Hook subscribes to cache
+6️⃣ Component re-renders when cache updates
+
+Deduplication:
+
+If 3 components call same query:
+
+Only 1 network request is sent.
+
+Huge performance win.
+
+---
+
+# ⚠️ 1️⃣0️⃣ Common Mistakes
+
+---
+
+## ❌ Mistake 1: Forgetting Middleware
+
+If you forget:
+
+```js
+.concat(apiSlice.middleware)
+```
+
+Queries won’t work properly.
+
+---
+
+## ❌ Mistake 2: Using Query for POST
+
+Wrong:
+
+```js
+builder.query({
+  query: () => ({
+    method: "POST"
+  })
+});
+```
+
+POST must be mutation.
+
+---
+
+## ❌ Mistake 3: Manual useEffect + Dispatch
+
+Wrong:
+
+```js
+useEffect(() => {
+  dispatch(getProducts());
+}, []);
+```
+
+RTK Query does not need manual dispatch.
+
+Use auto hooks.
+
+---
+
+## ❌ Mistake 4: Ignoring isFetching vs isLoading
+
+* `isLoading` → first load
+* `isFetching` → background refetch
+
+Important difference for UI UX.
+
+---
+
+# 🧨 1️⃣1️⃣ Edge Cases
+
+---
+
+## 🔥 Edge Case 1: Component Unmount
+
+If component unmounts:
+
+RTK Query keeps cache for default 60 seconds.
+
+After that:
+
+Cache is removed automatically.
+
+Configurable.
+
+---
+
+## 🔥 Edge Case 2: Same Query Multiple Times
+
+If 5 components use:
+
+```js
+useGetProductsQuery()
+```
+
+Only 1 API call.
+
+Others use cached result.
+
+Deduplication built-in.
+
+---
+
+## 🔥 Edge Case 3: Manual Refetch
+
+```js
+const { refetch } = useGetProductsQuery();
+```
+
+Call:
+
+```js
+refetch();
+```
+
+Useful for refresh button.
+
+---
+
+# 🧠 1️⃣2️⃣ Why RTK Query Is Enterprise-Level
+
+It provides:
+
+* Centralized API layer
+* Automatic caching
+* Request deduplication
+* Loading & error states
+* Automatic hook generation
+* DevTools integration
+* Background refetching
+* Reduced boilerplate
+
+Compared to manual thunks:
+
+Less code.
+Less bugs.
+More predictable.
+
+---
+
+# 🏢 1️⃣3️⃣ .NET Comparison (For You)
+
+| RTK Query      | .NET Equivalent              |
+| -------------- | ---------------------------- |
+| createApi      | HttpClient service           |
+| fetchBaseQuery | Base API client              |
+| query          | GET endpoint                 |
+| mutation       | POST/PUT/DELETE              |
+| Cache          | In-memory caching            |
+| Auto hooks     | Dependency injection service |
+
+RTK Query is like:
+
+Frontend data access layer with built-in caching.
+
+---
+
+# 🎯 1️⃣4️⃣ Interview-Level Questions
+
+You should answer:
+
+* What problem does RTK Query solve?
+* Difference between query and mutation?
+* Why is middleware required?
+* How does caching work?
+* What is request deduplication?
+* Difference between isLoading and isFetching?
+
+---
+
+# 📌 Blog 12 Summary
+
+You learned:
+
+* Why RTK Query exists
+* How to create API slice
+* How to add to store
+* How to use generated hooks
+* Query vs mutation
+* Caching & deduplication
+* Common mistakes
+* Edge cases
+* Enterprise benefits
+
+You are now in modern Redux data layer territory.
+
+---
+
+# 🚀 Next Blog
+
+👉 Blog 13: RTK Query Advanced Patterns
+(Tag invalidation, polling, optimistic updates, manual cache update, large-scale API architecture)
+
+This is where RTK Query becomes extremely powerful.
+
+Ready to continue? 💪

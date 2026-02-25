@@ -1,0 +1,419 @@
+# 📘 Blog 18: Testing Redux (Unit + Integration + Middleware + RTK Query)
+
+*(With Diagrams, Real Project Code, Mistakes & Edge Cases)*
+
+> 🎯 Goal: Test Redux like a senior engineer
+> 🎯 After this blog, you’ll confidently test slices, async thunks, middleware, RTK Query, and full integration flows.
+
+Testing is what separates mid-level from senior developers.
+
+---
+
+# 🧠 1️⃣ What Should We Test in Redux?
+
+In enterprise apps, we test:
+
+* ✅ Reducers (unit)
+* ✅ Async thunks
+* ✅ Selectors
+* ✅ Middleware
+* ✅ RTK Query endpoints
+* ✅ Component integration
+
+Testing strategy matters.
+
+---
+
+# 🏗 2️⃣ Redux Testing Architecture
+
+![Image](https://i0.wp.com/automationstepbystep.com/mobufoc/2020/04/TestPyramid1.png?fit=1014%2C752\&ssl=1)
+
+![Image](https://cdn-images-1.medium.com/max/800/0%2AysbTZG-Li1GgVzog.png)
+
+![Image](https://redux.js.org/assets/images/ReduxDataFlowDiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://miro.medium.com/1%2AgzSOKTC2V-mQhAJ-fc0qIA.jpeg)
+
+Testing layers:
+
+Unit Tests
+⬇
+Slice Tests
+⬇
+Async Logic Tests
+⬇
+Integration Tests
+⬇
+End-to-End Tests
+
+Redux logic should mostly be unit-testable.
+
+---
+
+# 🧪 3️⃣ Testing Reducers (Unit Testing)
+
+Reducers are pure functions → easiest to test.
+
+---
+
+## Example: cartSlice
+
+```ts
+interface CartState {
+  items: { id: number; price: number }[];
+  total: number;
+}
+
+const initialState: CartState = {
+  items: [],
+  total: 0
+};
+```
+
+---
+
+## Test File: cartSlice.test.ts
+
+```ts id="9p9x8d"
+import cartReducer, { addItem } from "./cartSlice";
+
+describe("cart reducer", () => {
+  it("should handle initial state", () => {
+    expect(cartReducer(undefined, { type: "unknown" }))
+      .toEqual({ items: [], total: 0 });
+  });
+
+  it("should add item correctly", () => {
+    const previousState = { items: [], total: 0 };
+
+    const result = cartReducer(
+      previousState,
+      addItem({ id: 1, price: 100 })
+    );
+
+    expect(result.items.length).toBe(1);
+    expect(result.total).toBe(100);
+  });
+});
+```
+
+Pure. Clean. Fast.
+
+---
+
+# 🚀 4️⃣ Testing createAsyncThunk
+
+Async testing requires mocking API.
+
+---
+
+## Example: loginUser thunk
+
+---
+
+## Test File
+
+```ts id="u4ef3p"
+import { loginUser } from "./authSlice";
+import configureStore from "redux-mock-store";
+import thunk from "redux-thunk";
+
+const mockStore = configureStore([thunk]);
+
+describe("loginUser thunk", () => {
+  it("dispatches fulfilled on success", async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            user: "Tushar",
+            accessToken: "123"
+          })
+      })
+    ) as jest.Mock;
+
+    const store = mockStore({});
+
+    await store.dispatch(
+      loginUser({ email: "a", password: "b" }) as any
+    );
+
+    const actions = store.getActions();
+    expect(actions[0].type).toContain("pending");
+    expect(actions[1].type).toContain("fulfilled");
+  });
+});
+```
+
+We check:
+
+* pending dispatched
+* fulfilled dispatched
+
+Not UI.
+Only logic.
+
+---
+
+# 🧠 5️⃣ Testing Selectors
+
+Selectors must be deterministic.
+
+---
+
+```ts id="v8i36m"
+import { selectFilteredProducts } from "./productsSelectors";
+
+it("filters products correctly", () => {
+  const state = {
+    products: {
+      entities: {
+        1: { id: 1, title: "Phone" },
+        2: { id: 2, title: "Laptop" }
+      }
+    },
+    filters: { search: "phone" }
+  };
+
+  const result = selectFilteredProducts(state as any);
+
+  expect(result.length).toBe(1);
+});
+```
+
+No store needed.
+
+Just pass mock state.
+
+---
+
+# 🧩 6️⃣ Testing Middleware
+
+Example: logger middleware.
+
+---
+
+```ts id="lm87za"
+const next = jest.fn();
+const store = {
+  getState: jest.fn(() => ({ count: 0 }))
+};
+
+loggerMiddleware(store)(next)({ type: "increment" });
+
+expect(next).toHaveBeenCalled();
+```
+
+You test:
+
+* Did middleware call next?
+* Did it dispatch extra actions?
+* Did it block action?
+
+Middleware is just function chaining.
+
+---
+
+# 🧪 7️⃣ Testing RTK Query
+
+RTK Query needs MSW (Mock Service Worker) for realistic testing.
+
+---
+
+## Example Test with React Testing Library
+
+```ts id="u3jowb"
+import { render, screen } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { store } from "../store";
+import Products from "./Products";
+
+test("renders products", async () => {
+  render(
+    <Provider store={store}>
+      <Products />
+    </Provider>
+  );
+
+  expect(await screen.findByText(/Phone/i)).toBeInTheDocument();
+});
+```
+
+MSW intercepts API calls.
+
+Test full integration.
+
+---
+
+# 🔄 8️⃣ Integration Testing (Realistic Approach)
+
+Test:
+
+* Component
+* Store
+* Reducer
+* Async logic
+
+Together.
+
+Example:
+
+```ts id="m6w7ch"
+render(
+  <Provider store={store}>
+    <LoginPage />
+  </Provider>
+);
+
+fireEvent.click(screen.getByText("Login"));
+
+expect(await screen.findByText("Dashboard"))
+  .toBeInTheDocument();
+```
+
+Test user behavior.
+Not implementation details.
+
+---
+
+# ⚠️ 9️⃣ Common Testing Mistakes
+
+---
+
+## ❌ Testing Redux Implementation Instead of Behavior
+
+Bad:
+
+```ts
+expect(action.type).toBe("auth/login/fulfilled");
+```
+
+Better:
+
+Test final state.
+
+---
+
+## ❌ Mocking Too Much
+
+If you mock store, reducer, middleware together:
+
+Test becomes meaningless.
+
+Test smallest unit possible.
+
+---
+
+## ❌ Ignoring Error Cases
+
+Always test:
+
+* fulfilled
+* rejected
+* edge cases
+
+---
+
+## ❌ Not Resetting Mocks
+
+Always:
+
+```ts
+afterEach(() => {
+  jest.clearAllMocks();
+});
+```
+
+---
+
+# 🧨 1️⃣0️⃣ Edge Cases
+
+---
+
+## 🔥 Async Race Conditions
+
+Test scenario:
+
+* Two dispatches
+* First resolves slower
+
+Ensure latest state is correct.
+
+---
+
+## 🔥 Testing Persisted State
+
+Mock localStorage carefully.
+
+Reset between tests.
+
+---
+
+## 🔥 Testing Token Refresh Middleware
+
+Simulate:
+
+* 401 response
+* refresh success
+* refresh failure
+
+Ensure logout triggered correctly.
+
+---
+
+# 🧠 1️⃣1️⃣ Enterprise Testing Strategy
+
+In large apps:
+
+* 70% reducer & logic tests
+* 20% integration tests
+* 10% E2E tests
+
+Redux logic is very testable.
+Use that advantage.
+
+---
+
+# 🏢 1️⃣2️⃣ .NET Comparison (For You)
+
+| Redux Testing    | .NET Equivalent           |
+| ---------------- | ------------------------- |
+| Reducer test     | Service unit test         |
+| Thunk test       | Async service test        |
+| Middleware test  | Pipeline handler test     |
+| Integration test | Controller + Service test |
+| MSW              | Mock API                  |
+
+Redux architecture makes unit testing easy.
+
+---
+
+# 🎯 1️⃣3️⃣ Interview-Level Questions
+
+You should answer:
+
+* How to test createAsyncThunk?
+* How to test middleware?
+* How to test selectors?
+* How to test RTK Query?
+* Unit vs integration testing difference?
+* Why reducers are easy to test?
+
+---
+
+# 📌 Blog 18 Summary
+
+You learned:
+
+* Testing reducers
+* Testing async thunks
+* Testing selectors
+* Testing middleware
+* Testing RTK Query
+* Integration testing
+* Testing mistakes
+* Enterprise testing strategy
+
+Now you can build production-grade, testable Redux apps.
+
+

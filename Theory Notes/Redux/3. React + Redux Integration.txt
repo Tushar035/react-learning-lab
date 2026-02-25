@@ -1,0 +1,374 @@
+# 📘 Blog 3: React + Redux Integration (How They Work Together)
+
+> 🎯 Goal: Understand how Redux connects to React
+> 🎯 After this blog, you’ll clearly understand `Provider`, `useSelector`, `useDispatch`, and re-renders.
+
+In Blog 2, we understood Redux internals.
+
+Now the question is:
+
+> How does React know Redux state changed?
+
+Let’s break it down step by step.
+
+---
+
+# 🧠 1️⃣ The Bridge Between React and Redux
+
+Redux is framework-independent.
+
+To connect it with React, we use:
+
+👉 **React Redux**
+
+This library provides:
+
+* `<Provider>`
+* `useSelector`
+* `useDispatch`
+* `connect` (older pattern)
+
+Without React Redux, React cannot access the store.
+
+---
+
+# 🏗 2️⃣ Provider – Making Store Available
+
+## What is Provider?
+
+`Provider` makes Redux store available to all React components.
+
+Example:
+
+```js
+import { Provider } from "react-redux";
+import { store } from "./store";
+
+function App() {
+  return (
+    <Provider store={store}>
+      <MyApp />
+    </Provider>
+  );
+}
+```
+
+What happens internally?
+
+* Provider uses React Context
+* It injects store into component tree
+* All child components can access store
+
+Think of it like:
+
+👉 Dependency Injection container in .NET
+
+---
+
+# 🔍 3️⃣ useSelector() – Reading Data from Store
+
+## What is useSelector?
+
+It allows a component to read data from Redux store.
+
+Example:
+
+```js
+import { useSelector } from "react-redux";
+
+const Counter = () => {
+  const count = useSelector(state => state.counter.count);
+  return <h1>{count}</h1>;
+};
+```
+
+Important:
+
+* Component subscribes to store
+* It re-renders only if selected value changes
+
+---
+
+# 🔄 4️⃣ How Re-render Actually Works
+
+![Image](https://paulonteri.com/images/thoughts/react-redux/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://redux.js.org/assets/images/ReduxDataFlowDiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://files.codingninjas.in/article_images/custom-upload-1688403616-a1df9e54.webp)
+
+![Image](https://global.discourse-cdn.com/freecodecamp/original/3X/6/d/6dc1b225deb9fa437ea57ccff85b4f6ee7220733.png)
+
+Let’s understand the internal flow:
+
+### Step 1
+
+Component calls:
+
+```js
+useSelector(selectorFunction)
+```
+
+### Step 2
+
+React Redux subscribes component to store
+
+### Step 3
+
+When dispatch happens:
+
+```js
+dispatch({ type: "increment" })
+```
+
+### Step 4
+
+Redux updates state
+
+### Step 5
+
+React Redux checks:
+
+Has selected value changed?
+
+If YES → Re-render component
+If NO → No re-render
+
+This makes Redux efficient.
+
+---
+
+# ⚠️ 5️⃣ Important: Equality Check
+
+By default, `useSelector` uses strict equality (`===`).
+
+If you return a new object every time:
+
+```js
+useSelector(state => {
+  return { count: state.count };
+});
+```
+
+This creates new object on every render.
+
+Result?
+
+❌ Component re-renders unnecessarily.
+
+Correct approach:
+
+```js
+const count = useSelector(state => state.count);
+```
+
+Or use `shallowEqual`:
+
+```js
+import { shallowEqual } from "react-redux";
+
+useSelector(selector, shallowEqual);
+```
+
+---
+
+# 📨 6️⃣ useDispatch() – Sending Actions
+
+`useDispatch()` gives access to dispatch function.
+
+Example:
+
+```js
+import { useDispatch } from "react-redux";
+
+const Counter = () => {
+  const dispatch = useDispatch();
+
+  return (
+    <button onClick={() => dispatch({ type: "increment" })}>
+      Increment
+    </button>
+  );
+};
+```
+
+Flow:
+
+UI click → dispatch → reducer → store update → re-render
+
+Simple and predictable.
+
+---
+
+# 🧩 7️⃣ connect() – The Old Way (Important for Interviews)
+
+Before hooks, we used:
+
+```js
+connect(mapStateToProps, mapDispatchToProps)(Component)
+```
+
+Example:
+
+```js
+const mapStateToProps = (state) => ({
+  count: state.counter.count
+});
+
+export default connect(mapStateToProps)(Counter);
+```
+
+Today:
+
+Hooks are preferred.
+
+But you must know `connect()` for interviews.
+
+---
+
+# 🏗 8️⃣ Complete Small Example
+
+Let’s build a minimal working structure.
+
+### reducer.js
+
+```js
+const initialState = { count: 0 };
+
+export function counterReducer(state = initialState, action) {
+  switch (action.type) {
+    case "increment":
+      return { count: state.count + 1 };
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+### store.js
+
+```js
+import { createStore } from "redux";
+import { counterReducer } from "./reducer";
+
+export const store = createStore(counterReducer);
+```
+
+---
+
+### index.js
+
+```js
+import { Provider } from "react-redux";
+import { store } from "./store";
+
+root.render(
+  <Provider store={store}>
+    <App />
+  </Provider>
+);
+```
+
+---
+
+### Counter.js
+
+```js
+import { useSelector, useDispatch } from "react-redux";
+
+const Counter = () => {
+  const count = useSelector(state => state.count);
+  const dispatch = useDispatch();
+
+  return (
+    <>
+      <h1>{count}</h1>
+      <button onClick={() => dispatch({ type: "increment" })}>
+        Increment
+      </button>
+    </>
+  );
+};
+```
+
+This is complete Redux + React integration.
+
+---
+
+# ⚡ 9️⃣ Performance Optimization Concepts
+
+Very important for large apps.
+
+## 🔹 Only select what you need
+
+Bad:
+
+```js
+useSelector(state => state)
+```
+
+Good:
+
+```js
+useSelector(state => state.counter.count)
+```
+
+---
+
+## 🔹 Split components
+
+Small connected components perform better.
+
+---
+
+## 🔹 Memoization
+
+Use:
+
+* `React.memo`
+* Memoized selectors (we’ll cover in next blogs)
+
+---
+
+# 🧠 1️⃣0️⃣ Common Beginner Mistakes
+
+❌ Selecting entire state
+❌ Returning new objects in selector
+❌ Dispatching inside render
+❌ Not wrapping app with Provider
+❌ Overusing global state
+
+---
+
+# 🏢 1️⃣1️⃣ Redux Integration vs .NET Thinking
+
+| React Redux | .NET Equivalent              |
+| ----------- | ---------------------------- |
+| Provider    | Dependency Injection root    |
+| useSelector | Injecting read-only service  |
+| useDispatch | Calling service method       |
+| Re-render   | UI update after state change |
+
+Think of it as:
+
+Frontend DI + state container + reactive UI.
+
+---
+
+# 🎯 Blog 3 Summary
+
+You learned:
+
+* Why React Redux exists
+* What Provider does
+* How useSelector subscribes
+* How re-render logic works
+* Why equality check matters
+* How useDispatch works
+* connect() legacy pattern
+* Performance basics
+
+Now Redux + React should feel connected and logical.
+

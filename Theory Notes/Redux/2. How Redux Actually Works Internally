@@ -1,0 +1,397 @@
+# 📘 Blog 2: How Redux Works Internally (Deep Dive – Fresher Friendly)
+
+> 🎯 Goal: Understand what happens **inside Redux** when you call `dispatch()`
+> 🎯 After this blog, Redux will feel logical — not magical.
+
+If Blog 1 was “What is Redux?”,
+this blog is:
+
+> “What actually happens behind the scenes?”
+
+---
+
+# 🧠 1️⃣ The Redux Core Engine
+
+At its heart, Redux has only:
+
+* A store object
+* A reducer function
+* A dispatch function
+* A listener list
+
+That’s it.
+
+Let’s break it down.
+
+---
+
+# 🏗 2️⃣ How `createStore()` Works Internally
+
+When you create a store:
+
+```js
+const store = createStore(rootReducer)
+```
+
+Redux internally does something like this (simplified):
+
+```js
+function createStore(reducer) {
+  let currentState
+  let listeners = []
+
+  function getState() {
+    return currentState
+  }
+
+  function dispatch(action) {
+    currentState = reducer(currentState, action)
+    listeners.forEach(listener => listener())
+  }
+
+  function subscribe(listener) {
+    listeners.push(listener)
+  }
+
+  dispatch({ type: "@@INIT" })
+
+  return { getState, dispatch, subscribe }
+}
+```
+
+👉 This is almost the real logic.
+
+Now let’s understand each part carefully.
+
+---
+
+# 🔄 3️⃣ What Happens When You Call `dispatch()`?
+
+![Image](https://redux.js.org/assets/images/ReduxDataFlowDiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://redux.js.org/assets/images/ReduxAsyncDataFlowDiagram-d97ff38a0f4da0f327163170ccc13e80.gif)
+
+![Image](https://www.tutorialspoint.com/redux/images/data_flow.jpg)
+
+![Image](https://miro.medium.com/1%2Arwnd-zztHEQ_Qt-ZVXH7Jw.png)
+
+Suppose user clicks a button:
+
+```js
+dispatch({ type: "increment" })
+```
+
+Here is what happens internally:
+
+### Step 1️⃣ – Action is sent to store
+
+Store receives:
+
+```js
+{ type: "increment" }
+```
+
+---
+
+### Step 2️⃣ – Store calls reducer
+
+```js
+currentState = reducer(currentState, action)
+```
+
+Reducer decides how state changes.
+
+---
+
+### Step 3️⃣ – New state replaces old state
+
+Important:
+
+Redux does NOT modify state.
+
+It replaces it.
+
+Old state → New state
+
+---
+
+### Step 4️⃣ – All subscribers are notified
+
+```js
+listeners.forEach(listener => listener())
+```
+
+In React, this triggers re-render.
+
+---
+
+# 🧩 4️⃣ What Is `subscribe()` Really?
+
+`subscribe()` registers a listener function.
+
+```js
+store.subscribe(() => {
+  console.log("State updated!")
+})
+```
+
+Internally, Redux keeps an array:
+
+```js
+let listeners = []
+```
+
+Every time dispatch runs:
+
+```js
+listeners.forEach(listener => listener())
+```
+
+This is how UI knows state changed.
+
+---
+
+# 🏗 5️⃣ combineReducers() – How It Works
+
+When app grows, we don’t want one giant reducer.
+
+So Redux provides:
+
+```js
+combineReducers({
+  user: userReducer,
+  cart: cartReducer,
+  products: productReducer
+})
+```
+
+Internally, combineReducers creates something like:
+
+```js
+function rootReducer(state = {}, action) {
+  return {
+    user: userReducer(state.user, action),
+    cart: cartReducer(state.cart, action),
+    products: productReducer(state.products, action)
+  }
+}
+```
+
+Important:
+
+* Each slice reducer manages only its own part
+* All reducers receive every action
+* They ignore irrelevant actions
+
+---
+
+# 🧠 6️⃣ Why Every Reducer Receives Every Action?
+
+This confuses beginners.
+
+Example:
+
+```js
+dispatch({ type: "user/login" })
+```
+
+Even cartReducer receives it.
+
+But cartReducer does:
+
+```js
+default:
+  return state
+```
+
+So nothing changes.
+
+This keeps Redux simple and predictable.
+
+---
+
+# ⚙️ 7️⃣ applyMiddleware() – The Pipeline System
+
+Now comes important concept.
+
+Middleware sits between:
+
+Dispatch → Reducer
+
+Think of it like:
+
+ASP.NET Core middleware pipeline.
+
+---
+
+### Example Logger Middleware
+
+```js
+const logger = store => next => action => {
+  console.log("Before:", store.getState())
+  console.log("Action:", action)
+  const result = next(action)
+  console.log("After:", store.getState())
+  return result
+}
+```
+
+Flow becomes:
+
+dispatch → logger → reducer
+
+Not directly dispatch → reducer.
+
+---
+
+### Visual Flow
+
+dispatch
+⬇
+middleware 1
+⬇
+middleware 2
+⬇
+reducer
+
+This allows:
+
+* Logging
+* Async logic
+* Error handling
+* API calls
+* Analytics
+
+---
+
+# 🔥 8️⃣ Redux Thunk Internals (Small Preview)
+
+Normally Redux expects:
+
+```js
+dispatch({ type: "increment" })
+```
+
+But thunk allows:
+
+```js
+dispatch((dispatch, getState) => {
+  fetch("/api")
+})
+```
+
+How?
+
+Because middleware checks:
+
+If action is function → execute it
+If action is object → pass to reducer
+
+That’s middleware power.
+
+---
+
+# 🏗 9️⃣ Store Enhancers
+
+Advanced concept.
+
+Store enhancers wrap createStore.
+
+DevTools works using store enhancers.
+
+Example:
+
+```js
+const enhancedCreateStore = applyMiddleware(logger)(createStore)
+```
+
+Think of it like:
+
+Decorating createStore.
+
+In .NET terms:
+
+Like wrapping service in decorator pattern.
+
+---
+
+# 🔁 1️⃣0️⃣ replaceReducer()
+
+Used in:
+
+* Code splitting
+* Micro-frontends
+* Dynamic reducer loading
+
+```js
+store.replaceReducer(newReducer)
+```
+
+Very powerful for enterprise apps.
+
+---
+
+# 🧠 1️⃣1️⃣ Why Redux Is Predictable?
+
+Because:
+
+* State can only change via dispatch
+* Reducers are pure functions
+* Flow is unidirectional
+* Everything is serializable
+* Middleware is controlled pipeline
+
+No magic.
+
+Just controlled function execution.
+
+---
+
+# 🏢 1️⃣2️⃣ Redux Internals vs .NET Thinking
+
+| Redux Concept   | .NET Equivalent             |
+| --------------- | --------------------------- |
+| Middleware      | ASP.NET pipeline            |
+| Reducer         | Pure business logic service |
+| combineReducers | Aggregated service layer    |
+| Store           | Singleton memory container  |
+| Dispatch        | Command invocation          |
+
+Redux is basically:
+
+A small state engine built on pure functions + pipeline.
+
+---
+
+# 🧪 1️⃣3️⃣ Why Understanding Internals Matters?
+
+Because:
+
+If you don’t understand internals:
+
+* Middleware feels confusing
+* Async feels magical
+* Bugs feel random
+* Performance issues become hard
+
+After this blog:
+
+You can even build Redux from scratch.
+
+---
+
+# 🎯 Blog 2 Summary
+
+You learned:
+
+* How createStore works
+* How dispatch works internally
+* How listeners trigger
+* How combineReducers merges reducers
+* How middleware pipeline works
+* What store enhancers are
+* Why Redux is predictable
+
+Now Redux should feel mechanical, not mysterious.
+
+

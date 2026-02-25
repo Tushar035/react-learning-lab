@@ -1,0 +1,431 @@
+# 📘 Blog 14: Complete Enterprise Authentication Flow
+
+*(Login, Refresh Token, Role-Based Access, Protected Routes, Store Reset, Edge Cases)*
+
+> 🎯 Goal: Design production-ready authentication architecture
+> 🎯 After this blog, you’ll understand how real companies implement auth in Redux apps.
+
+This is **critical** for high-paying jobs.
+
+We’ll build:
+
+* Login flow
+* Access token + refresh token
+* Auto refresh
+* Role-based authorization
+* Protected routes
+* Store reset on logout
+* Security best practices
+* Edge cases
+
+---
+
+# 🧠 1️⃣ Authentication Architecture Overview
+
+In enterprise apps, authentication is not just login.
+
+It includes:
+
+* Token storage strategy
+* Silent refresh
+* API interception
+* Global logout
+* Role management
+* Security boundaries
+
+---
+
+# 🏗 2️⃣ Full Auth Flow Diagram
+
+![Image](https://media2.dev.to/dynamic/image/width%3D800%2Cheight%3D%2Cfit%3Dscale-down%2Cgravity%3Dauto%2Cformat%3Dauto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Farticles%2Figvye1880i9491jbz525.png)
+
+![Image](https://apim.docs.wso2.com/en/3.1.0/assets/img/learn/oauth-refresh-token-diagram.png)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1200/1%2Ay-qgopNVlYcVrXgM84iPfA.jpeg)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1400/1%2AAmSI1OyNQJqTBBkAD5jUGg.png)
+
+Flow:
+
+User Login
+⬇
+Server returns Access Token + Refresh Token
+⬇
+Store access token in memory
+⬇
+Attach token to API requests
+⬇
+If 401 → Refresh token
+⬇
+If refresh fails → Logout
+
+This is modern secure architecture.
+
+---
+
+# 🏢 3️⃣ Real Project Setup – Auth Slice
+
+---
+
+## 📁 authSlice.js
+
+```js id="khe11y"
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (credentials, thunkAPI) => {
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials)
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Login failed");
+    }
+  }
+);
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState: {
+    user: null,
+    accessToken: null,
+    refreshToken: null,
+    role: null,
+    loading: false,
+    error: null
+  },
+  reducers: {
+    logout: (state) => {
+      state.user = null;
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.role = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
+        state.refreshToken = action.payload.refreshToken;
+        state.role = action.payload.role;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  }
+});
+
+export const { logout } = authSlice.actions;
+export default authSlice.reducer;
+```
+
+---
+
+# 🔐 4️⃣ Attaching Token to API Requests (RTK Query)
+
+Modify baseQuery:
+
+```js id="6llpbd"
+const baseQuery = fetchBaseQuery({
+  baseUrl: "/api",
+  prepareHeaders: (headers, { getState }) => {
+    const token = getState().auth.accessToken;
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    return headers;
+  }
+});
+```
+
+This attaches token automatically.
+
+No manual header handling in components.
+
+---
+
+# 🔄 5️⃣ Automatic Token Refresh
+
+When API returns 401:
+
+We intercept and refresh token.
+
+---
+
+## Custom Base Query Wrapper
+
+```js id="ivn6s2"
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions);
+
+  if (result.error && result.error.status === 401) {
+    const refreshResult = await baseQuery(
+      { url: "/refresh", method: "POST" },
+      api,
+      extraOptions
+    );
+
+    if (refreshResult.data) {
+      api.dispatch(
+        setCredentials(refreshResult.data)
+      );
+
+      result = await baseQuery(args, api, extraOptions);
+    } else {
+      api.dispatch(logout());
+    }
+  }
+
+  return result;
+};
+```
+
+This is production-grade token refresh logic.
+
+---
+
+# 🛡 6️⃣ Protected Routes
+
+Example:
+
+```js id="9r4b0a"
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
+
+const ProtectedRoute = ({ children }) => {
+  const token = useSelector(state => state.auth.accessToken);
+
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+```
+
+Usage:
+
+```js id="mszpxm"
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
+```
+
+---
+
+# 👑 7️⃣ Role-Based Authorization
+
+Example:
+
+```js id="yapvrr"
+const RoleProtectedRoute = ({ children, allowedRoles }) => {
+  const role = useSelector(state => state.auth.role);
+
+  if (!allowedRoles.includes(role)) {
+    return <Navigate to="/unauthorized" />;
+  }
+
+  return children;
+};
+```
+
+Used for:
+
+* Admin panels
+* Manager dashboards
+* Restricted features
+
+---
+
+# 🔄 8️⃣ Reset Store on Logout (Enterprise Pattern)
+
+We must clear all sensitive data.
+
+Root reducer pattern:
+
+```js id="7h7s3b"
+const appReducer = combineReducers({
+  auth,
+  cart,
+  orders
+});
+
+const rootReducer = (state, action) => {
+  if (action.type === "auth/logout") {
+    state = undefined;
+  }
+
+  return appReducer(state, action);
+};
+```
+
+Prevents data leakage.
+
+Very important.
+
+---
+
+# ⚠️ 9️⃣ Common Mistakes
+
+---
+
+## ❌ Storing Access Token in Redux Persist
+
+Storing tokens in localStorage is risky.
+
+Better:
+
+* Store access token in memory
+* Store refresh token in httpOnly cookie (backend-managed)
+
+Security > convenience.
+
+---
+
+## ❌ Not Handling Token Expiry
+
+If you don’t implement refresh:
+
+Users randomly get logged out.
+
+Bad UX.
+
+---
+
+## ❌ Forgetting to Reset State
+
+User logs out.
+
+Cart still contains old data.
+
+Security issue.
+
+---
+
+## ❌ Exposing Role Logic in UI Only
+
+Frontend role check is not security.
+
+Backend must also validate role.
+
+---
+
+# 🧨 1️⃣0️⃣ Edge Cases
+
+---
+
+## 🔥 Multiple Tabs
+
+User logs out in one tab.
+
+Other tab still authenticated.
+
+Solution:
+
+Use localStorage event listener.
+
+---
+
+## 🔥 Refresh Token Expired
+
+If refresh fails:
+
+Immediately logout.
+
+Do not loop refresh endlessly.
+
+---
+
+## 🔥 Race Condition During Refresh
+
+Multiple API calls hit 401 simultaneously.
+
+May trigger multiple refresh calls.
+
+Solution:
+
+Queue refresh requests.
+
+Advanced pattern.
+
+---
+
+# 🧠 1️⃣1️⃣ Security Best Practices
+
+* Never store refresh token in Redux
+* Use HTTPS only
+* Backend must validate roles
+* Reset store on logout
+* Avoid exposing sensitive state
+* Handle 401 globally
+* Limit token lifetime
+
+Enterprise-level awareness.
+
+---
+
+# 🏢 1️⃣2️⃣ .NET Comparison (For You)
+
+| Redux Auth Flow     | .NET Equivalent          |
+| ------------------- | ------------------------ |
+| Access token        | JWT                      |
+| Refresh token       | Refresh token endpoint   |
+| prepareHeaders      | HttpClient interceptor   |
+| baseQueryWithReauth | DelegatingHandler        |
+| ProtectedRoute      | Authorization policy     |
+| Role check          | Role-based authorization |
+
+You already know backend part.
+
+Now you know frontend part.
+
+---
+
+# 🎯 1️⃣3️⃣ Interview-Level Questions
+
+You should answer:
+
+* Where should tokens be stored?
+* How does token refresh work?
+* Why reset store on logout?
+* How to protect routes?
+* Why role check must exist on backend?
+* How to prevent refresh race condition?
+
+---
+
+# 📌 Blog 14 Summary
+
+You learned:
+
+* Complete authentication flow
+* Token storage strategy
+* Auto refresh pattern
+* Protected routes
+* Role-based authorization
+* Store reset pattern
+* Security best practices
+* Enterprise-level edge cases
+
+Now you understand authentication like a senior engineer.
+
+---
+
+

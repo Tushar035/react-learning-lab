@@ -1,0 +1,426 @@
+# 📘 Blog 5: Why Redux Toolkit Exists + `configureStore` Deep Dive
+
+*(With Diagrams, Real Project Code, Mistakes & Edge Cases)*
+
+> 🎯 Goal: Understand why Redux Toolkit was created and how `configureStore` simplifies everything
+> 🎯 After this blog, you’ll never write “old Redux” again.
+
+---
+
+# 🧠 1️⃣ The Problem with Old Redux
+
+Before modern setup, Redux required:
+
+* Manual `createStore`
+* Manual `applyMiddleware`
+* Manual DevTools setup
+* Writing action types
+* Writing action creators
+* Writing switch-case reducers
+* Installing `redux-thunk` separately
+
+Example (Old Way):
+
+```js
+import { createStore, applyMiddleware, combineReducers } from "redux";
+import thunk from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension";
+
+const rootReducer = combineReducers({
+  cart: cartReducer,
+  auth: authReducer
+});
+
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(thunk))
+);
+```
+
+Too much boilerplate.
+
+Too many mistakes.
+
+Too much configuration.
+
+---
+
+# 🚀 2️⃣ Enter Redux Toolkit
+
+👉 **Redux Toolkit**
+
+Redux Toolkit (RTK) is the official, recommended way to write Redux.
+
+It solves:
+
+* Boilerplate
+* Mutation bugs
+* Middleware setup
+* DevTools config
+* Complex reducer writing
+
+---
+
+# 🏗 3️⃣ What Is `configureStore()`?
+
+`configureStore()` replaces:
+
+* `createStore`
+* `applyMiddleware`
+* DevTools setup
+* Default middleware configuration
+
+---
+
+# 🔄 4️⃣ How `configureStore()` Works Internally
+
+![Image](https://redux.js.org/assets/images/ReduxDataFlowDiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1400/1%2AyYkitaR24SuFNXYyTxL1xA.gif)
+
+![Image](https://redux.js.org/assets/images/ReduxAsyncDataFlowDiagram-d97ff38a0f4da0f327163170ccc13e80.gif)
+
+![Image](https://res.cloudinary.com/infinijith/image/upload/v1673004771/Infinijith%20Blog%20Images/Redux/Redux%20Middleware/Redux_Middleware_Flow_-_Infinijith_kfyb8q.png)
+
+Internally, `configureStore()` does:
+
+1️⃣ Combines reducers automatically
+2️⃣ Adds Redux Thunk automatically
+3️⃣ Enables DevTools in development
+4️⃣ Adds safety checks middleware
+5️⃣ Applies middleware pipeline
+
+So instead of 10 lines of setup, you write:
+
+```js
+import { configureStore } from "@reduxjs/toolkit";
+
+export const store = configureStore({
+  reducer: {
+    cart: cartReducer,
+    auth: authReducer
+  }
+});
+```
+
+That’s it.
+
+---
+
+# 🏢 5️⃣ Real Project Example (E-Commerce)
+
+Let’s build real structure.
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+ ├── app/
+ │     └── store.js
+ ├── features/
+ │     ├── cart/
+ │     │     └── cartSlice.js
+ │     ├── auth/
+ │           └── authSlice.js
+```
+
+---
+
+## 🛒 cartSlice.js (Basic Version)
+
+```js
+import { createSlice } from "@reduxjs/toolkit";
+
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: {
+    items: [],
+    total: 0
+  },
+  reducers: {
+    addItem: (state, action) => {
+      state.items.push(action.payload);
+      state.total += action.payload.price;
+    }
+  }
+});
+
+export const { addItem } = cartSlice.actions;
+export default cartSlice.reducer;
+```
+
+Wait…
+
+We mutated state?
+
+Yes.
+
+Redux Toolkit uses **Immer** internally.
+
+It converts mutations into immutable updates safely.
+
+---
+
+## 🏗 store.js
+
+```js
+import { configureStore } from "@reduxjs/toolkit";
+import cartReducer from "../features/cart/cartSlice";
+import authReducer from "../features/auth/authSlice";
+
+export const store = configureStore({
+  reducer: {
+    cart: cartReducer,
+    auth: authReducer
+  }
+});
+```
+
+Done.
+
+No manual middleware.
+No DevTools config.
+
+---
+
+# 🧠 6️⃣ What Middleware Does RTK Add Automatically?
+
+By default:
+
+* redux-thunk
+* serializableCheck
+* immutableCheck
+
+These checks prevent common mistakes.
+
+---
+
+# ⚠️ 7️⃣ Common Mistakes with `configureStore`
+
+---
+
+## ❌ Mistake 1: Disabling Middleware Without Understanding
+
+```js
+configureStore({
+  reducer,
+  middleware: []
+});
+```
+
+Now:
+
+* No thunk
+* No safety checks
+* Harder debugging
+
+Only customize if you understand deeply.
+
+---
+
+## ❌ Mistake 2: Storing Non-Serializable Data
+
+Example:
+
+```js
+addItem: (state, action) => {
+  state.items.push({
+    ...action.payload,
+    date: new Date()
+  });
+}
+```
+
+RTK will warn:
+
+> Non-serializable value detected.
+
+Why?
+
+DevTools & time travel need serializable state.
+
+---
+
+## ❌ Mistake 3: Replacing Entire Reducer Incorrectly
+
+Wrong:
+
+```js
+configureStore({
+  reducer: cartReducer
+});
+```
+
+This works for small apps.
+
+But in scalable apps, always use object form:
+
+```js
+reducer: {
+  cart: cartReducer
+}
+```
+
+Better architecture.
+
+---
+
+# 🧨 8️⃣ Edge Cases (Senior-Level Awareness)
+
+---
+
+## 🔥 Edge Case 1: Large Production State
+
+If you store:
+
+* Huge product lists
+* Thousands of cart items
+* Large nested objects
+
+DevTools becomes slow.
+
+Solution:
+
+* Normalize state
+* Paginate data
+* Avoid unnecessary duplication
+
+---
+
+## 🔥 Edge Case 2: Strict Mode Double Dispatch (React 18)
+
+In development:
+
+You may see actions twice.
+
+Example:
+
+```js
+dispatch(addItem(product))
+```
+
+Appears twice in DevTools.
+
+Reason:
+
+React Strict Mode intentionally re-runs certain logic.
+
+Not a Redux issue.
+
+Production is safe.
+
+---
+
+## 🔥 Edge Case 3: Custom Middleware Order
+
+If you add middleware:
+
+```js
+configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(logger)
+});
+```
+
+Order matters.
+
+Middleware pipeline executes in order defined.
+
+---
+
+# 🧪 9️⃣ Adding Custom Middleware (Real Example)
+
+Let’s add logger.
+
+```js
+const logger = store => next => action => {
+  console.log("Dispatching:", action.type);
+  return next(action);
+};
+
+export const store = configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(logger)
+});
+```
+
+Flow becomes:
+
+dispatch
+⬇
+default middleware
+⬇
+logger
+⬇
+reducer
+
+---
+
+# 🧠 1️⃣0️⃣ Why `configureStore` Is Enterprise Friendly
+
+It:
+
+* Enforces best practices
+* Reduces setup bugs
+* Enables DevTools
+* Adds safety checks
+* Simplifies scaling
+
+For a Tech Lead:
+
+Standardizing store setup is important.
+
+RTK does that.
+
+---
+
+# 🏢 1️⃣1️⃣ .NET Comparison (For You)
+
+| Redux Toolkit      | .NET Equivalent                |
+| ------------------ | ------------------------------ |
+| configureStore     | AddServices + Middleware setup |
+| Default middleware | Built-in pipeline              |
+| serializableCheck  | Model validation               |
+| immutableCheck     | Defensive programming          |
+
+Redux Toolkit is like:
+
+Opinionated architecture template.
+
+---
+
+# 🎯 1️⃣2️⃣ Interview Questions From This Blog
+
+You should be able to answer:
+
+* Why was Redux Toolkit created?
+* What does configureStore do internally?
+* What middleware is added by default?
+* Why are serializable checks important?
+* Why can we “mutate” state in createSlice?
+* What happens if middleware order changes?
+
+---
+
+# 📌 Blog 5 Summary
+
+You learned:
+
+* Problems with old Redux
+* Why Redux Toolkit exists
+* What configureStore does internally
+* Real e-commerce project setup
+* Middleware configuration
+* Common mistakes
+* Edge cases
+* Production-level thinking
+
+Now you are officially in **modern Redux world**.
+
+---
+
+

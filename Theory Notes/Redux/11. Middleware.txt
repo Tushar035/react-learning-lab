@@ -1,0 +1,428 @@
+# 📘 Blog 11: Advanced Middleware Design + Custom Middleware Deep Dive
+
+*(With Diagrams, Real Project Code, Mistakes & Edge Cases)*
+
+> 🎯 Goal: Understand Redux middleware like an architect
+> 🎯 After this blog, you’ll be able to design logging, analytics, error tracking, token refresh, and advanced pipelines.
+
+Middleware is where Redux becomes **enterprise powerful**.
+
+---
+
+# 🧠 1️⃣ What Is Middleware (Revisited, Deep Level)
+
+Middleware sits between:
+
+```
+dispatch(action)  →  reducer
+```
+
+But in reality:
+
+```
+dispatch
+   ↓
+middleware 1
+   ↓
+middleware 2
+   ↓
+middleware 3
+   ↓
+reducer
+```
+
+Middleware can:
+
+* Log actions
+* Modify actions
+* Stop actions
+* Trigger new actions
+* Handle async logic
+* Catch errors
+* Perform side effects
+
+Think:
+
+👉 ASP.NET Core request pipeline.
+
+---
+
+# 🔄 2️⃣ Middleware Pipeline Diagram
+
+![Image](https://redux.js.org/assets/images/ReduxAsyncDataFlowDiagram-d97ff38a0f4da0f327163170ccc13e80.gif)
+
+![Image](https://res.cloudinary.com/infinijith/image/upload/v1673004771/Infinijith%20Blog%20Images/Redux/Redux%20Middleware/Redux_Middleware_Flow_-_Infinijith_kfyb8q.png)
+
+![Image](https://miro.medium.com/1%2A5r9L0GpkiLQ6cd0NGtbtNw.png)
+
+![Image](https://designingforscale.com/content/images/2020/11/reduxMiddleware.png)
+
+Flow:
+
+Component
+⬇
+dispatch(action)
+⬇
+Middleware A
+⬇
+Middleware B
+⬇
+Middleware C
+⬇
+Reducer
+⬇
+New State
+
+Each middleware decides:
+
+* Continue?
+* Modify?
+* Block?
+
+---
+
+# 🏗 3️⃣ Middleware Anatomy (Very Important)
+
+Every middleware looks like this:
+
+```js
+const myMiddleware = store => next => action => {
+  // before reducer
+  const result = next(action);
+  // after reducer
+  return result;
+};
+```
+
+Three layers:
+
+1️⃣ store → gives getState & dispatch
+2️⃣ next → passes action to next middleware
+3️⃣ action → current dispatched action
+
+Understanding this structure = senior-level knowledge.
+
+---
+
+# 🏢 4️⃣ Real Project Example – Enterprise E-Commerce
+
+We’ll implement:
+
+* Logger middleware
+* Error tracking middleware
+* Auth token refresh middleware
+* Analytics middleware
+
+---
+
+# 📝 5️⃣ Logger Middleware (Production Style)
+
+```js
+const loggerMiddleware = store => next => action => {
+  console.log("Dispatching:", action.type);
+  console.log("Previous State:", store.getState());
+
+  const result = next(action);
+
+  console.log("Next State:", store.getState());
+
+  return result;
+};
+```
+
+Add to store:
+
+```js
+export const store = configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(loggerMiddleware)
+});
+```
+
+Used only in development.
+
+---
+
+# 🚨 6️⃣ Global Error Handling Middleware
+
+Catch rejected async actions globally.
+
+```js
+const errorMiddleware = store => next => action => {
+  if (action.type.endsWith("/rejected")) {
+    console.error("Global Error:", action.payload || action.error);
+  }
+
+  return next(action);
+};
+```
+
+Benefits:
+
+* Centralized error logging
+* Connect to Sentry
+* Show global toast
+
+Enterprise pattern.
+
+---
+
+# 🔐 7️⃣ Auth Token Refresh Middleware (Real Use Case)
+
+Problem:
+
+API returns 401.
+We must refresh token automatically.
+
+```js
+const authMiddleware = store => next => action => {
+  if (action.type.endsWith("/rejected") && action.payload === "Unauthorized") {
+    store.dispatch(refreshToken());
+  }
+
+  return next(action);
+};
+```
+
+This allows:
+
+* Transparent token refresh
+* No duplicate logic in components
+
+Very powerful pattern.
+
+---
+
+# 📊 8️⃣ Analytics Middleware
+
+Track user behavior.
+
+```js
+const analyticsMiddleware = store => next => action => {
+  if (action.type.startsWith("cart/")) {
+    console.log("Tracking cart action:", action.type);
+  }
+
+  return next(action);
+};
+```
+
+Send to:
+
+* Google Analytics
+* Mixpanel
+* Custom tracking system
+
+---
+
+# ⚠️ 9️⃣ Common Middleware Mistakes
+
+---
+
+## ❌ Mistake 1: Forgetting to Call `next(action)`
+
+Wrong:
+
+```js
+const badMiddleware = store => next => action => {
+  console.log(action);
+};
+```
+
+Action never reaches reducer.
+
+App breaks silently.
+
+Always return:
+
+```js
+return next(action);
+```
+
+---
+
+## ❌ Mistake 2: Dispatching Infinite Loop
+
+Bad:
+
+```js
+const loopMiddleware = store => next => action => {
+  store.dispatch({ type: "something" });
+  return next(action);
+};
+```
+
+Dispatch → middleware → dispatch → middleware → infinite loop.
+
+Always guard condition carefully.
+
+---
+
+## ❌ Mistake 3: Mutating Action Object
+
+Bad:
+
+```js
+action.type = "modified";
+```
+
+Actions should remain immutable.
+
+If needed, create new action.
+
+---
+
+# 🧨 1️⃣0️⃣ Edge Cases
+
+---
+
+## 🔥 Edge Case 1: Middleware Order Matters
+
+```js
+middleware: (getDefaultMiddleware) =>
+  getDefaultMiddleware()
+    .concat(authMiddleware)
+    .concat(loggerMiddleware)
+```
+
+Order defines execution flow.
+
+If logger is first:
+
+* Logs before auth handling.
+
+Design carefully.
+
+---
+
+## 🔥 Edge Case 2: Async Inside Middleware
+
+Middleware can handle async.
+
+But be careful:
+
+```js
+const asyncMiddleware = store => next => async action => {
+  await something();
+  return next(action);
+};
+```
+
+May delay action propagation.
+
+Understand side effects.
+
+---
+
+## 🔥 Edge Case 3: Accessing Updated State
+
+If you need updated state:
+
+```js
+const result = next(action);
+const newState = store.getState();
+```
+
+Call next first.
+
+Otherwise you get old state.
+
+---
+
+# 🏗 1️⃣1️⃣ Combining Multiple Middleware
+
+Enterprise setup:
+
+```js
+export const store = configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: true,
+      immutableCheck: true
+    }).concat(
+      loggerMiddleware,
+      errorMiddleware,
+      authMiddleware,
+      analyticsMiddleware
+    )
+});
+```
+
+Clean pipeline.
+
+Scalable.
+
+---
+
+# 🧠 1️⃣2️⃣ Advanced Pattern: Action Interceptor
+
+You can modify outgoing action:
+
+```js
+const addMetaMiddleware = store => next => action => {
+  const enhancedAction = {
+    ...action,
+    meta: {
+      ...action.meta,
+      timestamp: Date.now()
+    }
+  };
+
+  return next(enhancedAction);
+};
+```
+
+Adds metadata automatically.
+
+Useful for:
+
+* Logging
+* Tracking
+* Debugging
+
+---
+
+# 🏢 1️⃣3️⃣ .NET Comparison (For You)
+
+| Redux Middleware     | .NET Equivalent         |
+| -------------------- | ----------------------- |
+| Middleware pipeline  | ASP.NET middleware      |
+| next(action)         | await next()            |
+| Error middleware     | Global exception filter |
+| Auth middleware      | Authentication handler  |
+| Logger middleware    | Logging middleware      |
+| Analytics middleware | Telemetry interceptor   |
+
+Redux middleware = frontend request pipeline.
+
+---
+
+# 🎯 1️⃣4️⃣ Interview-Level Questions
+
+You should answer:
+
+* What is middleware in Redux?
+* Why does order matter?
+* What happens if you don’t call next(action)?
+* Can middleware stop an action?
+* How to implement token refresh?
+* Difference between thunk and custom middleware?
+
+---
+
+# 📌 Blog 11 Summary
+
+You learned:
+
+* Middleware architecture deeply
+* Real enterprise middleware examples
+* Logger, error handling, analytics, auth refresh
+* Infinite loop dangers
+* Middleware order importance
+* Action interception
+* Enterprise-level thinking
+
+Now you understand Redux as a pipeline engine.
+

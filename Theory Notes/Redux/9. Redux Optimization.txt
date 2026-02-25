@@ -1,0 +1,444 @@
+# 📘 Blog 9: Memoized Selectors + Reselect + Performance Optimization Deep Dive
+
+*(With Diagrams, Real Project Code, Mistakes & Edge Cases)*
+
+> 🎯 Goal: Master Redux performance
+> 🎯 After this blog, you’ll prevent unnecessary re-renders in large applications.
+
+This is where junior developers struggle and senior developers shine.
+
+---
+
+# 🧠 1️⃣ The Real Performance Problem
+
+Redux state updates are fast.
+
+The real problem is:
+
+👉 **React re-rendering too often.**
+
+Example:
+
+```js
+useSelector(state => state.products)
+```
+
+If products array changes reference:
+
+* Component re-renders
+* Even if data is same
+* Even if only one item changed
+
+In large apps → performance issues.
+
+---
+
+# 🏗 2️⃣ How Re-render Actually Happens
+
+![Image](https://redux.js.org/assets/images/ReduxDataFlowDiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif)
+
+![Image](https://miro.medium.com/1%2A1lNF4Snsb60qdjoofRTHrQ.png)
+
+![Image](https://storage.googleapis.com/algodailyrandomassets/curriculum/dynamic-programming/dp1.png)
+
+![Image](https://www.interviewcake.com/images/svgs/fibonacci__binary_tree_memoized.svg?bust=211)
+
+Flow:
+
+dispatch
+⬇
+store updates
+⬇
+useSelector runs selector
+⬇
+React compares old vs new value
+⬇
+If different → re-render
+
+Important:
+
+Redux uses strict equality (`===`).
+
+If reference changes → re-render.
+
+---
+
+# 🧠 3️⃣ What Is a Selector?
+
+A selector is a function that extracts data from state.
+
+Basic example:
+
+```js
+const selectProducts = state => state.products;
+```
+
+But selectors can also derive data:
+
+```js
+const selectExpensiveProducts = state =>
+  state.products.filter(p => p.price > 10000);
+```
+
+Problem:
+
+This creates a new array every time.
+
+Even if nothing changed.
+
+---
+
+# ⚠️ 4️⃣ The Hidden Performance Bug
+
+Bad:
+
+```js
+const expensive = useSelector(state =>
+  state.products.filter(p => p.price > 10000)
+);
+```
+
+Every dispatch:
+
+* filter runs
+* new array created
+* reference changes
+* component re-renders
+
+Even if products didn’t change.
+
+This is common mistake.
+
+---
+
+# 🚀 5️⃣ Enter Reselect (Memoized Selectors)
+
+Redux Toolkit re-exports **Reselect**.
+
+Memoization means:
+
+If input hasn’t changed → return cached result.
+
+---
+
+# 🏗 6️⃣ How Memoization Works
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1200/1%2AyMIAoghCM9ma0SRKBSz2gA.png)
+
+![Image](https://reselect.js.org/assets/images/reselect-memoization-52b66000c0f0ff9e452c678243f6d695.png)
+
+![Image](https://media.licdn.com/dms/image/v2/D5612AQH7Emk1iQwxXw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1691536610273?e=2147483647\&t=CcD3tRjNv0svLt5vE39dWIy5RvnrGABe_uwrYBaUw1c\&v=beta)
+
+![Image](https://miro.medium.com/1%2AXuI7L2_Qz1GltdggKHLJkQ.png)
+
+Flow:
+
+Input state
+⬇
+Selector runs
+⬇
+Output cached
+⬇
+Next time:
+If input same → return cached output
+
+No recalculation.
+No new array.
+No re-render.
+
+---
+
+# 🏢 7️⃣ Real Project Example – E-Commerce Filtering
+
+Let’s build realistic product filtering.
+
+---
+
+## 📁 productsSelectors.js
+
+```js
+import { createSelector } from "@reduxjs/toolkit";
+
+const selectProducts = state => state.products.entities;
+const selectSearchTerm = state => state.filters.search;
+
+export const selectFilteredProducts = createSelector(
+  [selectProducts, selectSearchTerm],
+  (products, searchTerm) => {
+    return Object.values(products).filter(product =>
+      product.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
+);
+```
+
+Now use it:
+
+```js
+const filteredProducts = useSelector(selectFilteredProducts);
+```
+
+If products & searchTerm don’t change:
+
+No recomputation.
+No re-render.
+
+---
+
+# 🧠 8️⃣ Why This Is Powerful
+
+Without memoization:
+
+* Every keypress recalculates
+* Every unrelated dispatch recalculates
+* Large datasets slow down UI
+
+With memoization:
+
+* Runs only when needed
+* Performance stable
+* Scales better
+
+---
+
+# ⚙️ 9️⃣ Using `createEntityAdapter` Selectors
+
+From Blog 8:
+
+```js
+const productsSelectors = productsAdapter.getSelectors(
+  state => state.products
+);
+```
+
+You get:
+
+```js
+productsSelectors.selectAll(state);
+productsSelectors.selectById(state, id);
+```
+
+These are already memoized.
+
+Highly optimized.
+
+---
+
+# ⚠️ 1️⃣0️⃣ Common Mistakes
+
+---
+
+## ❌ Mistake 1: Defining Selector Inside Component
+
+Wrong:
+
+```js
+const MyComponent = () => {
+  const selectFiltered = createSelector(...);
+  const data = useSelector(selectFiltered);
+}
+```
+
+This creates new selector on every render.
+
+Memoization breaks.
+
+Correct:
+
+Define selectors outside component.
+
+---
+
+## ❌ Mistake 2: Returning New Object Every Time
+
+Bad:
+
+```js
+useSelector(state => ({
+  count: state.counter.value
+}));
+```
+
+New object every time → re-render always.
+
+Better:
+
+```js
+const count = useSelector(state => state.counter.value);
+```
+
+Or use shallowEqual:
+
+```js
+useSelector(selector, shallowEqual);
+```
+
+---
+
+## ❌ Mistake 3: Over-Memoizing Everything
+
+Not every selector needs memoization.
+
+Simple direct selectors:
+
+```js
+state => state.counter.value
+```
+
+Do NOT need createSelector.
+
+Memoization is useful when:
+
+* Filtering
+* Sorting
+* Mapping
+* Derived calculations
+
+---
+
+# 🧨 1️⃣1️⃣ Edge Cases
+
+---
+
+## 🔥 Edge Case 1: Multiple Arguments
+
+If selector depends on dynamic id:
+
+```js
+const selectProductById = (state, id) =>
+  state.products.entities[id];
+```
+
+Better pattern:
+
+```js
+const makeSelectProductById = () =>
+  createSelector(
+    [(state) => state.products.entities, (_, id) => id],
+    (entities, id) => entities[id]
+  );
+```
+
+Use per-component instance selector.
+
+Important for large lists.
+
+---
+
+## 🔥 Edge Case 2: Sorting Inside Selector
+
+Bad:
+
+```js
+products.sort(...)
+```
+
+Sort mutates array.
+
+Instead:
+
+```js
+[...products].sort(...)
+```
+
+Or use entityAdapter sortComparer.
+
+---
+
+## 🔥 Edge Case 3: Huge Dataset (10k+ items)
+
+Memoization helps.
+
+But if filtering heavy logic:
+
+* Consider server-side filtering
+* Consider pagination
+* Avoid expensive loops per keystroke
+
+---
+
+# 🏗 1️⃣2️⃣ Component Optimization Example
+
+```js
+import React from "react";
+import { useSelector } from "react-redux";
+import { selectFilteredProducts } from "./productsSelectors";
+
+const ProductList = React.memo(() => {
+  const products = useSelector(selectFilteredProducts);
+
+  return (
+    <>
+      {products.map(p => (
+        <div key={p.id}>{p.title}</div>
+      ))}
+    </>
+  );
+});
+```
+
+Using:
+
+* Memoized selector
+* React.memo
+
+Maximum optimization.
+
+---
+
+# 🧠 1️⃣3️⃣ Performance Strategy (Enterprise Thinking)
+
+In large apps:
+
+1️⃣ Normalize state
+2️⃣ Use entityAdapter
+3️⃣ Use memoized selectors
+4️⃣ Avoid selecting entire state
+5️⃣ Split components
+6️⃣ Avoid heavy derived calculations
+
+Performance is architecture, not just code.
+
+---
+
+# 🏢 1️⃣4️⃣ .NET Comparison (For You)
+
+| Redux Concept | .NET Equivalent      |
+| ------------- | -------------------- |
+| Selector      | LINQ query           |
+| Memoization   | Caching query result |
+| Derived state | Computed property    |
+| EntityAdapter | Dictionary lookup    |
+| React.memo    | View optimization    |
+
+Selectors are like cached LINQ projections.
+
+---
+
+# 🎯 1️⃣5️⃣ Interview-Level Questions
+
+You should answer:
+
+* What is memoization?
+* Why do selectors cause re-renders?
+* When should you use createSelector?
+* Why not define selector inside component?
+* How does entityAdapter improve performance?
+* How to optimize large datasets?
+
+---
+
+# 📌 Blog 9 Summary
+
+You learned:
+
+* How re-rendering works
+* Why selectors cause performance issues
+* How memoization solves it
+* Real e-commerce filtering example
+* Entity adapter selectors
+* Mistakes and edge cases
+* Enterprise optimization strategy
+
+Now you understand Redux performance deeply.
+
