@@ -1,60 +1,31 @@
 🧭 Topic 6: MUI Core Components – Navigation & 💬 Feedback
-
-(Definitions + Core Concepts + Code Examples)
-
+---------------------------------------------------------
 In modern UI architecture, two categories are critical:
-
 Navigation components → Help users move across screens
-
 Feedback components → Communicate system status & actions
 
-
 In Material UI (MUI), these components are designed with:
-
 Accessibility (keyboard & ARIA support)
-
-Material Design standards
-
+Material design standards
 Responsive behavior
-
 Theme integration
-
 State-driven rendering
 
-
-
----
-
 🧭 NAVIGATION COMPONENTS
-
-
----
-
+---------------------------
 1️⃣ AppBar
-
-✅ Definition
-
+---------
 AppBar is a top navigation bar used to display branding, titles, and global actions.
-
 It typically appears at the top of the screen.
 
-
----
-
 🔎 Core Concepts
-
+----------------
 Positioned using position="static | fixed | sticky"
-
 Often contains Toolbar
-
 Supports color themes
 
-
-
----
-
 💻 Example
-
+------------
 import { AppBar, Toolbar, Typography } from "@mui/material";
 
 function Example() {
@@ -69,75 +40,44 @@ function Example() {
   );
 }
 
-
----
-
 🎯 When to Use
-
+----------------
 ✔ Main navigation header
 ✔ Branding + global actions
 ✔ Top-level layout structure
 
-
----
-
 2️⃣ Toolbar
-
-✅ Definition
-
+-----------
 Toolbar is a flexible container used inside AppBar to align items horizontally.
-
 It provides spacing and alignment.
 
-
----
-
 💻 Example
-
+------------
 <AppBar>
   <Toolbar>
     <Typography variant="h6">Logo</Typography>
   </Toolbar>
 </AppBar>
 
-
----
-
 🎯 Purpose
-
+------------
 Align icons & text
 
 Maintain consistent height
 
-
-
----
-
 3️⃣ Drawer
-
-✅ Definition
-
+---------
 Drawer is a side navigation panel that slides in from left or right.
-
 Used for secondary navigation.
 
-
----
-
 🔎 Types
-
+--------
 Temporary → overlay
-
 Permanent → always visible
-
 Persistent → toggled
 
-
-
----
-
 💻 Example
-
+------------
 import { Drawer, List, ListItem, ListItemText } from "@mui/material";
 
 function Example() {
@@ -152,41 +92,24 @@ function Example() {
   );
 }
 
-
----
-
 🎯 When to Use
-
+---------------
 ✔ Admin dashboards
 ✔ Sidebar navigation
 ✔ Multi-section apps
 
-
----
-
 4️⃣ Tabs
-
-✅ Definition
-
+----------
 Tabs allow users to switch between different views within the same page.
 
-
----
-
 🔎 Core Concept
-
+---------------
 Controlled by value
-
 Each tab has index
-
 Works with TabPanel pattern
 
-
-
----
-
 💻 Example
-
+-----------
 import { Tabs, Tab } from "@mui/material";
 import React from "react";
 
@@ -201,29 +124,18 @@ function Example() {
   );
 }
 
-
----
-
 🎯 When to Use
-
+----------------
 ✔ Profile pages
 ✔ Settings panels
 ✔ Multi-view content
 
-
----
-
 5️⃣ BottomNavigation
-
-✅ Definition
-
+------------------
 BottomNavigation provides mobile-friendly navigation at the bottom of the screen.
 
-
----
-
 💻 Example
-
+------------
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import React from "react";
@@ -238,29 +150,18 @@ function Example() {
   );
 }
 
-
----
-
 🎯 When to Use
-
+--------------
 ✔ Mobile apps
 ✔ React Native Web layouts
 ✔ Few primary routes
 
-
----
-
 6️⃣ Breadcrumbs
-
-✅ Definition
-
+-----------------
 Breadcrumbs show hierarchical navigation path.
 
-
----
-
 💻 Example
-
+-----------
 import { Breadcrumbs, Link, Typography } from "@mui/material";
 
 function Example() {
@@ -273,29 +174,18 @@ function Example() {
   );
 }
 
-
----
-
 🎯 When to Use
-
+----------------
 ✔ Multi-level apps
 ✔ Admin panels
 ✔ CMS systems
 
-
----
-
 7️⃣ Menu
-
-✅ Definition
-
+-------------
 Menu displays a list of actions in a dropdown anchored to a button.
 
-
----
-
 💻 Example
-
+-------------
 import { Menu, MenuItem, Button } from "@mui/material";
 import React from "react";
 
@@ -319,25 +209,14 @@ function Example() {
   );
 }
 
-
----
-
 💬 FEEDBACK COMPONENTS
-
-
----
-
+--------------------------
 1️⃣ Snackbar
-
-✅ Definition
-
+-----------
 Snackbar displays brief notification messages at the bottom of the screen.
 
-
----
-
 💻 Example
-
+------------
 import { Snackbar, Button } from "@mui/material";
 import React from "react";
 
@@ -357,20 +236,12 @@ function Example() {
   );
 }
 
-
----
-
 2️⃣ Alert
-
-✅ Definition
-
+----------
 Alert displays important feedback messages (success, error, warning, info).
 
-
----
-
 💻 Example
-
+------------
 import { Alert } from "@mui/material";
 
 function Example() {
@@ -381,20 +252,12 @@ function Example() {
   );
 }
 
-
----
-
 3️⃣ Dialog
-
-✅ Definition
-
+-----------
 Dialog is a modal window that interrupts user flow for important decisions.
 
-
----
-
 💻 Example
-
+------------
 import { Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
 import React from "react";
 
@@ -416,20 +279,12 @@ function Example() {
   );
 }
 
-
----
-
 4️⃣ Backdrop
-
-✅ Definition
-
+------------
 Backdrop creates a dimmed overlay behind content, often used with loading indicators.
 
-
----
-
 💻 Example
-
+------------
 import { Backdrop, CircularProgress } from "@mui/material";
 
 function Example() {
@@ -440,20 +295,12 @@ function Example() {
   );
 }
 
-
----
-
 5️⃣ Progress
-
-✅ Definition
-
+--------------
 Progress indicates loading state or completion percentage.
 
-
----
-
 💻 Example
-
+----------
 import { CircularProgress, LinearProgress } from "@mui/material";
 
 function Example() {
@@ -465,20 +312,12 @@ function Example() {
   );
 }
 
-
----
-
 6️⃣ Skeleton
-
-✅ Definition
-
+-----------
 Skeleton displays a placeholder preview while content is loading.
 
-
----
-
 💻 Example
-
+-----------
 import { Skeleton } from "@mui/material";
 
 function Example() {
@@ -487,37 +326,22 @@ function Example() {
   );
 }
 
-
----
-
 🧠 Architecture-Level Understanding
-
+--------------------------------------
 Navigation components:
-
 Structure app flow
-
 Improve discoverability
-
 Maintain layout consistency
 
-
 Feedback components:
-
 Inform users
-
 Prevent confusion
-
 Improve UX clarity
 
-
-
----
-
 🚀 Enterprise Best Practices
-
+-----------------------------
 ✔ Use Drawer + AppBar for dashboards
 ✔ Use Tabs for internal switching
 ✔ Use Snackbar for non-blocking messages
 ✔ Use Dialog for destructive actions
 ✔ Use Skeleton instead of spinner when loading data lists
-

@@ -9,6 +9,7 @@ Flexbox
 ✔ Theme-based spacing
 ✔ Material Design principles
 
+Ctrl + Space to see the available props for MUI components in vs code
 
 1️⃣ Box
 ----------

@@ -1,16 +1,12 @@
 🚀  Axios
 -----------
 1️⃣ What is Axios?
-
 Axios is a Promise-based HTTP client for:
-
 Browser (XHR / Fetch under the hood)
-
 Node.js (http module)
 
-
 It helps you:
-
+-------------
 ✔ Send HTTP requests
 ✔ Automatically parse JSON
 ✔ Handle 4xx/5xx as errors
@@ -20,20 +16,14 @@ It helps you:
 ✔ Set timeouts
 ✔ Track upload/download progress
 
-
----
-
 2️⃣ Axios Basic Usage
-
+-----------------------
 Install
 
 npm install axios
 
-
----
-
 Basic GET
-
+---------
 import axios from "axios";
 
 const fetchUsers = async () => {
@@ -41,11 +31,8 @@ const fetchUsers = async () => {
   return response.data;
 };
 
-
----
-
 Response Structure
-
+-----------------
 {
   data,
   status,
@@ -56,14 +43,11 @@ Response Structure
 }
 
 Most important:
-
+---------------
 response.data
 
-
----
-
 3️⃣ Axios Configuration (Defaults)
-
+----------------------------------
 Instead of calling axios everywhere:
 
 Create Central API Client
@@ -82,33 +66,22 @@ const api = axios.create({
 
 export default api;
 
-
----
-
 Why This Is Critical?
-
+---------------------
 Without this:
-
 Duplicate baseURL
-
 Hardcoded headers
-
 No global timeout
-
 No centralized error handling
 
-
-With instance: ✔ Clean
+With instance:
+✔ Clean
 ✔ Scalable
 ✔ Maintainable
 
-
----
-
 4️⃣ Request Config Options (Small But Important)
-
+------------------------------------------------
 Axios supports:
-
 axios({
   method: "post",
   url: "/users",
@@ -131,12 +104,8 @@ timeout	Cancel long requests
 withCredentials	Send cookies
 signal	Cancel request
 
-
-
----
-
 5️⃣ Request Interceptors (Attach JWT)
-
+-------------------------------------
 api.interceptors.request.use(
   config => {
     const token = localStorage.getItem("accessToken");
@@ -150,25 +119,15 @@ api.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-
----
-
 Why Important?
-
+--------------
 Attach token automatically
-
 Add custom headers
-
 Log request
-
 Modify request dynamically
 
-
-
----
-
 6️⃣ Response Interceptors
-
+--------------------------
 api.interceptors.response.use(
   response => response,
   error => {
@@ -177,11 +136,8 @@ api.interceptors.response.use(
   }
 );
 
-
----
-
 7️⃣ Deep Error Handling
-
+------------------------
 Axios error object:
 
 {
@@ -193,7 +149,7 @@ Axios error object:
 }
 
 Handle different error types:
-
+----------------------------
 try {
   await api.get("/users");
 } catch (error) {
@@ -206,22 +162,16 @@ try {
   }
 }
 
-
----
-
 8️⃣ Timeout Handling
-
+---------------------
 const api = axios.create({
   timeout: 5000
 });
 
 Prevents hanging requests.
 
-
----
-
 9️⃣ Cancel Requests (AbortController)
-
+-------------------------------------
 useEffect(() => {
   const controller = new AbortController();
 
@@ -237,17 +187,11 @@ useEffect(() => {
 }, []);
 
 Prevents:
-
 Memory leaks
-
 State update on unmounted component
 
-
-
----
-
 🔟 Retry Logic (Exponential Backoff)
-
+-------------------------------------
 const fetchWithRetry = async (retries = 3, delay = 1000) => {
   try {
     return await api.get("/users");
@@ -259,40 +203,24 @@ const fetchWithRetry = async (retries = 3, delay = 1000) => {
 };
 
 Used for:
-
 Temporary network failure
-
 Server overload protection
 
-
-
----
-
 🔥 1️⃣1️⃣ Axios + JWT Refresh Token Implementation (CRITICAL)
-
+-------------------------------------------------------------
 This is real production-level implementation.
 
 Problem
-
 Access token expires → API returns 401 → user logged out.
-
 Better approach: Auto-refresh token and retry original request.
 
-
----
-
 Step 1: Store Tokens
-
+-----------------------
 Access Token → short expiry (15 min)
-
 Refresh Token → longer expiry
 
-
-
----
-
 Step 2: Add Response Interceptor
-
+---------------------------------
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -352,10 +280,8 @@ api.interceptors.response.use(
 );
 
 
----
-
 What This Solves
-
+-----------------
 ✔ Multiple parallel 401 requests
 ✔ Avoids multiple refresh calls
 ✔ Retries original request
@@ -363,11 +289,8 @@ What This Solves
 
 This is enterprise-level solution.
 
-
----
-
 🔥 1️⃣2️⃣ Axios + React Query Integration
-
+--------------------------------------
 React Query (TanStack Query) handles:
 
 ✔ Caching
@@ -376,18 +299,12 @@ React Query (TanStack Query) handles:
 ✔ Loading states
 ✔ Deduplication
 
-
----
-
 Install
 
 npm install @tanstack/react-query
 
-
----
-
 Setup Query Client
-
+------------------
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
@@ -396,21 +313,16 @@ const queryClient = new QueryClient();
   <App />
 </QueryClientProvider>
 
-
----
-
 Create Axios API Function
-
+---------------------------
 const getUsers = async () => {
   const response = await api.get("/users");
   return response.data;
 };
 
 
----
-
 Use with React Query
-
+--------------------------
 import { useQuery } from "@tanstack/react-query";
 
 const Users = () => {
@@ -427,93 +339,65 @@ const Users = () => {
 };
 
 
----
-
 Why This Is Powerful?
-
 Axios handles:
-
 HTTP layer
-
 Token logic
 
-
 React Query handles:
-
 State management
-
 Caching
-
 Refetching
-
 Background sync
-
 
 This is modern frontend architecture.
 
 
----
-
 🔥 1️⃣3️⃣ Advanced Axios Concepts (Often Missed)
-
+------------------------------------------------
 ✔ Transform Request
-
+-------------------
 transformRequest: [(data) => {
   return JSON.stringify(data);
 }]
 
 
----
-
 ✔ Transform Response
-
+---------------------
 transformResponse: [(data) => {
   const parsed = JSON.parse(data);
   return parsed.data;
 }]
 
 
----
-
 ✔ Params Serializer
-
+------------------
 paramsSerializer: params => {
   return new URLSearchParams(params).toString();
 }
 
-
----
-
 ✔ Upload Progress
-
+-----------------
 api.post("/upload", file, {
   onUploadProgress: progressEvent => {
     console.log(progressEvent.loaded);
   }
 });
 
-
----
-
 ✔ Concurrency Control
-
+------------------------
 Promise.all([
   api.get("/users"),
   api.get("/posts")
 ]);
 
-
----
-
 ✔ Cancel Previous Search Request
-
+-----------------------------------
 Useful for search input debounce.
 
 
----
-
 🏗 Recommended Folder Structure
-
+-----------------------------
 /api
   apiClient.js
   authInterceptor.js
@@ -522,18 +406,14 @@ Useful for search input debounce.
   useAuth.js
 
 
----
-
 🧠 Senior-Level Axios Thinking
-
+---------------------------------
 A junior asks:
-
 > How to call API?
-
-
+-------------------
 
 A senior asks:
-
+-----------------
 > What if token expires?
 What if multiple 401 happen?
 What if request is slow?
@@ -541,15 +421,10 @@ How do we retry safely?
 How do we prevent memory leaks?
 How do we log errors?
 
-
-
 That’s production mindset.
 
-
----
-
 🚀 Final Summary
-
+-----------------
 Axios provides:
 
 ✔ Global configuration
@@ -561,4 +436,3 @@ Axios provides:
 ✔ Cancellation
 ✔ Upload progress
 ✔ React Query integration
-

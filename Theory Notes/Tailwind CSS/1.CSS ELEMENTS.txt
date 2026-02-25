@@ -295,7 +295,6 @@ Signature Capture
 Map Marker
 AR Viewer
 
-
 🧠 1️⃣1️⃣ Accessibility Elements
 -------------------------------
 Skip Navigation Link
@@ -304,5 +303,3 @@ Live Region
 ARIA Alert
 Screen Reader Text
 High Contrast Mode Toggle
-
-
