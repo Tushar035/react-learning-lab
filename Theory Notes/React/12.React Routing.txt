@@ -56,9 +56,9 @@ npm install react-router-dom
 5. Basic Routing Setup
 --------------------------
 To enable routing:
-1. Wrap your app with BrowserRouter
-2. Define routes using Routes
-3. Map paths using Route
+1. Wrap your app with BrowserRouter in main.jsx
+2. Define routes using Routes  in app.jsx
+3. Map paths using Route in app.jsx
 
 Step 1: Wrap App with BrowserRouter
 -----------------------------------
@@ -75,7 +75,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 BrowserRouter listens to URL changes.
-It uses the browser’s history stack.
+It uses the browser’s history stack. (history api)
 It makes routing available in the app.
 
 Step 2: Define Routes
@@ -97,7 +97,7 @@ function App() {
 export default App;
 
 Routes replaces Switch (v6)
-Route defines:
+Route attributes defines:
 path → URL
 element → Component to render
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 function Counter() {
   const [count, setCount] = useState(0);
@@ -42,6 +43,10 @@ function Counter() {
 
   return (
     <>
+      <nav>
+      <Link to="/">Home</Link>
+      <Link to="/profile">About</Link>
+      </nav>
       <h2>{count}</h2>
       <button onClick={increaseThreeTimes}>increase by +3</button>
     </>

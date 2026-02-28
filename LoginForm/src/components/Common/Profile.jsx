@@ -1,13 +1,14 @@
 import React from 'react'
 
 function Profile({...rest}) {
+  console.log(rest)
   return (
     <div>
-      <h1>{rest.name}'s Profile</h1>
+      <h1>{rest.user.name}'s Profile</h1>
       <ul>
-        <li>Name : {rest.name}</li>
-        <li>Age : {rest.age}</li>
-        <li>City : {rest.city}</li>
+        <li>Name : {rest.user.name}</li>
+        <li>Age : {rest.user.age}</li>
+        <li>City : {rest.user.city}</li>
       </ul>
     </div>
   )
